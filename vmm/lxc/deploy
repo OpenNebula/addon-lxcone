@@ -1,0 +1,172 @@
+#!/bin/bash
+
+# -------------------------------------------------------------------------- #
+# Copyright 2002-2015, OpenNebula Project (OpenNebula.org), C12G Labs        #
+# 									     #
+# Authors: Sergio Vega Gutiérrez          sergiojvg92@gmail.com		     #
+#	   José Manuel de la Fé Herrero   jmdelafe92@gmail.com               #
+#                                                                            #
+# Licensed under the Apache License, Version 2.0 (the "License"); you may    #
+# not use this file except in compliance with the License. You may obtain    #
+# a copy of the License at                                                   #
+#                                                                            #
+# http://www.apache.org/licenses/LICENSE-2.0                                 #
+#                                                                            #
+# Unless required by applicable law or agreed to in writing, software        #
+# distributed under the License is distributed on an "AS IS" BASIS,          #
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.   #
+# See the License for the specific language governing permissions and        #
+# limitations under the License.                                             #
+#--------------------------------------------------------------------------- #
+
+##############################################################################
+#                            	XPATH                                        #
+##############################################################################
+
+XPATH="/var/lib/one/remotes/datastore/xpath.rb --stdin"
+
+unset i j XPATH_ELEMENTS
+
+while read -r -d '' element; do
+    XPATH_ELEMENTS[i++]="$element"
+done < <($XPATH		/VM/ID \
+			/VM/NAME \
+			/VM/TEMPLATE/MEMORY \
+			/VM/TEMPLATE/CPU \
+			/VM/TEMPLATE/NIC/BRIDGE \
+                        /VM/TEMPLATE/NIC/IP \
+                        /VM/TEMPLATE/CONTEXT/ETH0_MASK \
+                        /VM/TEMPLATE/NIC/MAC \
+                        /VM/TEMPLATE/CONTEXT/ETH0_GATEWAY \
+			/VM/TEMPLATE/CONTEXT/DISK_ID)
+
+VM_ID="${XPATH_ELEMENTS[0]}"
+VM_HOSTNAME="${XPATH_ELEMENTS[1]}"
+VM_MEMORY="${XPATH_ELEMENTS[2]}"
+VM_CPUs="${XPATH_ELEMENTS[3]}"
+VM_NIC_BRIDGE="${XPATH_ELEMENTS[4]}"
+VM_NIC_IP="${XPATH_ELEMENTS[5]}"
+VM_NIC_NETMASK="${XPATH_ELEMENTS[6]}"
+VM_NIC_MAC="${XPATH_ELEMENTS[7]}"
+VM_NIC_GATEWAY="${XPATH_ELEMENTS[8]}"
+VM_DISKS="${XPATH_ELEMENTS[9]}"
+
+
+# Create the directory where the containers will be stored #
+
+sudo chmod 777 /var/lib/lxc
+
+if [ ! -d /var/lib/lxc/LXCoNe/one-$VM_ID ]; then
+        sudo mkdir -p /var/lib/lxc/LXCoNe/one-$VM_ID
+	sudo chown -R oneadmin:oneadmin /var/lib/lxc/LXCoNe/one-$VM_ID
+fi
+
+# Convert netmask to cidr notation #
+
+nbits=0
+IFS=.
+for dec in $VM_NIC_NETMASK ; do
+        case $dec in
+                255) let nbits+=8;;
+                254) let nbits+=7; break ;;
+                252) let nbits+=6; break ;;
+                248) let nbits+=5; break ;;
+                240) let nbits+=4; break ;;
+                224) let nbits+=3; break ;;
+                192) let nbits+=2; break ;;
+                128) let nbits+=1; break ;;
+                0);;
+                *) echo "$VM_NIC_NETMASK is an invalid netmask. Setting up /24" && export DEFAULT_NETMASK=24;;
+       esac
+done
+
+if [ "${DEFAULT_NETMASK}" = 24 ]
+then
+	CIDR=24
+else
+	CIDR=$nbits
+fi
+
+#mascara_cidr=`ipcalc $VM_NIC_IP $VM_NIC_NETMASK | grep Netmask: | awk ' { print $4 } '`
+
+#############################################################################
+#				  FSTAB                                     #
+#############################################################################
+
+# Attach extra drives to containers #
+touch /var/lib/lxc/LXCoNe/one-$VM_ID/fstab
+
+DISK=1
+while [ $DISK -lt $VM_DISKS ]; do
+	if test -d /media/lxc-hdds/one-$VM_ID/$DISK
+then
+	sudo mount /var/lib/one/datastores/0/$VM_ID/disk.$DISK /media/lxc-hdds/one-$VM_ID/$DISK
+else
+	sudo mkdir -p /media/lxc-hdds/one-$VM_ID/$DISK
+	sudo mount /var/lib/one/datastores/0/$VM_ID/disk.$DISK /media/lxc-hdds/one-$VM_ID/$DISK
+	echo "/media/lxc-hdds/one-$VM_ID/$DISK  media/$DISK     none    bind,create=dir 0 0" >> /var/lib/lxc/LXCoNe/one-$VM_ID/fstab
+fi
+	let DISK=DISK+1
+done
+
+##############################################################################
+#                      GENERATING CONFIG FILE	                             #
+##############################################################################
+
+cat > /var/lib/lxc/LXCoNe/one-$VM_ID/config <<EOF
+# Template used to create this container: /usr/share/lxc/templates/lxc-debian
+# Parameters passed to the template:
+# For additional config options, please look at lxc.container.conf(5)
+lxc.rootfs = loop:/var/lib/one/datastores/0/$VM_ID/disk.0
+
+# Common configuration
+lxc.include = /usr/share/lxc/config/debian.common.conf
+
+# Container specific configuration
+lxc.mount = /var/lib/lxc/LXCoNe/one-$VM_ID/fstab
+lxc.arch = amd64
+lxc.autodev = 1
+lxc.kmsg = 0
+
+# Logs
+lxc.logfile = /var/lib/lxc/LXCoNe/one-$VM_ID/one-$VM_ID.log
+lxc.console.logfile = /var/lib/lxc/LXCoNe/one-$VM_ID/console.log
+
+# CPU
+#lxc.cgroup.cpuset.cpus =
+#lxc.cgroup.cpu.shares =
+
+# RAM
+lxc.cgroup.memory.limit_in_bytes = ${VM_MEMORY}M
+
+# RED
+lxc.utsname = $VM_HOSTNAME
+lxc.network.type = veth
+lxc.network.veth.pair=veth$VM_ID
+lxc.network.flags = up
+lxc.network.link = $VM_NIC_BRIDGE
+lxc.network.hwaddr = $VM_NIC_MAC
+lxc.network.ipv4 = ${VM_NIC_IP}/$CIDR
+lxc.network.ipv4.gateway = $VM_NIC_GATEWAY
+
+#ID=$VM_ID
+#HOSTNAME=$VM_HOSTNAME
+#MEMORY=$VM_MEMORY
+#CPUs=$VM_CPUs
+#NIC_BRIDGE=$VM_NIC_BRIDGE
+#NIC_IP=$VM_NIC_IP
+#NIC_NETMASK=$VM_NIC_NETMASK
+#CIDR=$CIDR
+#NIC_MAC=$VM_NIC_MAC
+#NIC_GATEWAY=$VM_NIC_GATEWAY
+#DISKS=$VM_DISKS
+#DEFAULT_NETMASK=$DEFAULT_NETMASK
+#nbits=$nbits
+
+EOF
+
+##############################################################################
+#                  	    INICIAR CONTENEDOR VIRTUAL                       #
+##############################################################################
+
+sudo lxc-start -d -n one-$VM_ID -f /var/lib/lxc/LXCoNe/one-$VM_ID/config

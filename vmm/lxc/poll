@@ -1,0 +1,112 @@
+#!/bin/bash
+
+# -------------------------------------------------------------------------- #
+# Copyright 2002-2015, OpenNebula Project (OpenNebula.org), C12G Labs        #
+# 									     #
+# Authors: Sergio Vega Gutiérrez          sergiojvg92@gmail.com		     #
+#	   José Manuel de la Fé Herrero   jmdelafe92@gmail.com               #
+#                                                                            #
+# Licensed under the Apache License, Version 2.0 (the "License"); you may    #
+# not use this file except in compliance with the License. You may obtain    #
+# a copy of the License at                                                   #
+#                                                                            #
+# http://www.apache.org/licenses/LICENSE-2.0                                 #
+#                                                                            #
+# Unless required by applicable law or agreed to in writing, software        #
+# distributed under the License is distributed on an "AS IS" BASIS,          #
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.   #
+# See the License for the specific language governing permissions and        #
+# limitations under the License.                                             #
+#--------------------------------------------------------------------------- #
+
+echo "VM_POLL=YES"
+
+sudo lxc-ls --fancy | grep one- | while read VM; do
+	VM_ID=$(echo $VM | cut -d' ' -f 1 | cut -d- -f2)
+	DEPLOY_ID=$(echo $VM | cut -d' ' -f 1)
+	LXC_STATE=$(echo $VM | cut -d' ' -f 2)
+
+	if [ "${LXC_STATE}" = RUNNING ]
+	then
+	# RUNNING
+		STATE=a
+
+	# CPU
+		rCPU=`sudo lxc-cgroup -n one-${VM_ID} cpuacct.usage`
+		let "USEDCPU = ${rCPU} / 1024"
+
+	# MEMORY
+		rMEMORY=`sudo lxc-cgroup -n one-${VM_ID} memory.usage_in_bytes`
+		let "USEDMEMORY = ${rMEMORY} / 1024"
+
+	# NETWORK
+		read rNETRX rNETTX <<< `/sbin/ifconfig veth${VM_ID} | grep "RX bytes" | awk ' { print $2 " " $6 } '`
+		NETTX=${rNETRX/*:}
+		NETRX=${rNETTX/*:}
+
+	# DATA
+		cat <<EOT
+VM=[
+ ID=${VM_ID},
+ DEPLOY_ID=$DEPLOY_ID,
+ POLL="STATE=$STATE USEDCPU=$USEDCPU NETRX=$NETRX NETTX=$NETTX USEDMEMORY=$USEDMEMORY" ]
+EOT
+
+	else
+		if [ "${LXC_STATE}" = FROZEN ]
+		then
+		# SUPENDED
+			STATE=p
+		# CPU
+        	        rCPU=`sudo lxc-cgroup -n one-${VM_ID} cpuacct.usage`
+                	let "USEDCPU = ${rCPU} / 1024"
+
+        	# MEMORY
+                	rMEMORY=`sudo lxc-cgroup -n one-${VM_ID} memory.usage_in_bytes`
+                	let "USEDMEMORY = ${rMEMORY} / 1024"
+
+	        # NETWORK
+                	read rNETRX rNETTX <<< `/sbin/ifconfig veth${VM_ID} | grep "RX bytes" | awk ' { print $2 " " $6 } '`
+			NETTX=${rNETRX/*:}
+                	NETRX=${rNETTX/*:}
+
+		# DATA
+			cat <<EOT
+VM=[
+ ID=${VM_ID},
+ DEPLOY_ID=$DEPLOY_ID,
+ POLL="STATE=$STATE USEDCPU=$USEDCPU NETRX=$NETRX NETTX=$NETTX USEDMEMORY=$USEDMEMORY" ]
+EOT
+
+
+		else
+			if [ "${LXC_INFO_STATE}" = "" ]
+			then
+			# POWER OFF
+               	        	STATE=d
+
+	                # DATA
+				cat <<EOT
+VM=[
+ ID=${VM_ID},
+ DEPLOY_ID=$DEPLOY_ID,
+ POLL="STATE=$STATE" ]
+EOT
+
+			else
+			# UNKNOWN
+				STATE=e
+
+			# DATA
+                                cat <<EOT
+VM=[
+ ID=${VM_ID},
+ DEPLOY_ID=$DEPLOY_ID,
+ POLL="STATE=$STATE" ]
+EOT
+			fi
+
+		fi
+	fi
+
+done
