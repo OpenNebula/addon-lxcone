@@ -19,8 +19,7 @@ More info:
 
 ## Authors
 
-Leader: Sergio Vega Gutiérrez (sergiojvg92@gmail.com)
-Leader: José Manuel de la Fé Herrero (jmdelafe92@gmail.com)
+Leaders: Sergio Vega Gutiérrez (sergiojvg92@gmail.com), José Manuel de la Fé Herrero (jmdelafe92@gmail.com)
 
 ## Compatibility
 
