@@ -30,7 +30,7 @@ Debian 8 (jessie) PC.
 
 ## Installation, Configuration and Usage
 Use this guide:
-https://github.com/OpenNebula/addon-lxcone/Guide.md
+https://github.com/OpenNebula/addon-lxcone/blob/master/Guide.md
 
 ## References
 https://linuxcontainers.org/
