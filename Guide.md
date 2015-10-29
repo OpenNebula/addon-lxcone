@@ -30,7 +30,7 @@ is a cloud computing platform for managing heterogeneous distributed data center
 
 Add the OpenNebula repository:
 ```
-# wget -q -O- http://downloads.opennebula.org/repo/Ubuntu/repo.key | apt-key add -
+$ wget -q -O- http://downloads.opennebula.org/repo/Ubuntu/repo.key | apt-key add -
 ```
 
 ```
@@ -53,7 +53,7 @@ Add the OpenNebula repository:
 
 There are two main processes that must be started, the main OpenNebula daemon: `opennebula`, and the graphical user interface: `opennebula-sunstone`.
 
-Sunstone listens only in the loopback interface by default for security reasons. To change it edit **/etc/one/sunstone-server**.conf and change **:host: 127.0.0.1** to **:host: 0.0.0.0**.
+> For security reasons, Sunstone listens only in the loopback interface by default. In case you want to change this behavior, edit **/etc/one/sunstone-server**.conf and change **:host: 127.0.0.1** to **:host: 0.0.0.0**.
 
 Now restart Sunstone:
 ```
@@ -99,43 +99,60 @@ $ chmod 600 ~/.ssh/config
 
 ### 1.6. Copy and set permissions to the **LXC** drivers
 
-Copy the LXC folder under **vmm** to the frontend on **/var/lib/one/remotes/vmm**. 
+Copy the **lxc** folder under **vmm** to the frontend on **/var/lib/one/remotes/vmm**. 
 
 The files located inside (**deploy**, **cancel**, **shutdown**...) should be in the following path **/var/lib/one/remotes/vmm/lxc/deploy**.
 
-Copy the LXC folder under **im** to the frontend on **/var/lib/one/remotes/im**.
+Copy the **lxc.d** folder under **im** to the frontend on **/var/lib/one/remotes/im**.
 
 The files located inside (**monlxc.sh**...) should be in the following path **/var/lib/one/remotes/im/lxc.d/mon_lxc.sh**
 
-Change permissions:
+Change user, group and permissions:
 ```
 # chown -R oneadmin:oneadmin /var/lib/one/remotes/vmm/lxc
 ``` 
 ```
-# chmod -R 715 /var/lib/one/remotes/vmm/lxc
+# chmod -R 755 /var/lib/one/remotes/vmm/lxc
 ```
 ```
 # chown -R oneadmin:oneadmin /var/lib/one/remotes/im/lxc.d
 ``` 
 ```
-# chmod -R 715 /var/lib/one/remotes/im/lxc.d
+# chmod -R 755 /var/lib/one/remotes/im/lxc.d
 ```
 
 ### 1.7. Modify **/etc/one/oned.conf**
 
-Under Information Driver Configuration, add this:
+Under **Information Driver Configuration** add this:
 ```
-#--------------------------------------------------------------
+#-------------------------------------------------------------------------------
+# LXC Information Driver Manager Configuration
+# -r number of retries when monitoring a host
+# -t number of threads, i.e. number of hosts monitored at the same time
+#-------------------------------------------------------------------------------
+IM_MAD = [
+ name = "lxc",
+ executable = "one_im_ssh",
+ arguments = "-c -t 1 -r 0 lxc" ]
+#-------------------------------------------------------------------------------
+
+```
+
+Under **Virtualization Driver Configuration** add this:
+```
+#------------------------------------------------------------------------------- 
 # LXC Virtualization Driver Manager Configuration 
-# -r number of retries when monitoring a host 
+# -r number of retries when monitoring a host
 # -t number of threads, i.e. number of actions performed at the same time
-#--------------------------------------------------------------
-VM_MAD = [ name = "lxc", 
-   executable = "one_vmm_exec", 
+#-------------------------------------------------------------------------------
+VM_MAD = [ name = "lxc",
+   executable = "one_vmm_exec",
    arguments = "-t 15 -r 0 lxc",
-   type = "xml" ] 
-#--------------------------------------------------------------
+   type = "xml" ]
+#-------------------------------------------------------------------------------
+
 ```
+
 We are adding a configuration file example, you can check it.
 
 Restart **OpenNebula** service.
@@ -331,14 +348,15 @@ Inside the container type:
 
 
 ### 3.3. Make the image fit into a 512-byte sector 
-This will only be necesary if using LVM datastores. This images created by LXC won't fit inside an LVM volume because of their size, we are working on this. A simple patch will be the following:
+Images created by LXC won't mount well, either in a loop device or a LV, in case LVM is being used. This happens because size of images created with LXC is not multiple of 512 bytes. Right now we are working on this,  but a simple patch will be the following:
 
 ####  3.3.1. Create an empty raw image.
 This can be done in different ways, one of them is the following command:
 ```
 # qemu-img create -f raw image_name <SIZE_IN_MB>M
 ```
-You need to have "qemu" installed for this to work.
+You need to have "qemu" installed for this to work. This package should be already installed because it's a dependency of opennebula-node.
+You should specify size a little bigger than **fssize** parameter when creating the image with **lxc-create**, just in case.
 
 ####  3.3.2. Dump content inside image
 ```
@@ -351,9 +369,9 @@ You need to have "qemu" installed for this to work.
 #### 4.1. Enter the **Sunstone** interface
 
 Log in to `http://192.168.1.1:9869/` address.
-Replace **192.168.1.1** with the frontend ip address
+Replace **192.168.1.1** with the frontend ip address.
 
-The credentials are located in the frontend in **/var/lib/one/.one/one_auth** file.
+The credentials are located in the frontend inside **/var/lib/one/.one/one_auth**. You'll need to be oneadmin user to be able to read this file.
 
 
 #### 4.2. Upload the image previously created with **LXC** to **OpenNebula** using **Sunstone**
@@ -380,7 +398,7 @@ You can add one using sunstone under **Infrastructure** --> **Hosts** --> **ADD*
 
 #### This is the required data:
 * Type. Select **Custom**.
-* Write the host's Ip address where LXC is installed and configured.
+* Write the host's Ip address where LXC is installed and configured. You can also write a hostname or DNS if previously configurated.
 * Under **Drivers**
     * Virtualization. Select Custom.
     * Information. Select Custom.
@@ -431,8 +449,9 @@ Select the Virtual Machine and click **Deploy** from the menu.
 
 
 ### Any issue or question please contact us.
-Jose Manuel de la Fe jmdelafe92@gmail.com
-Sergio Vega Gutierrez sergiojvg92@gmail.com 
+Sergio Vega Gutierrez sergiojvg92@gmail.com   
+Jose Manuel de la Fe jmdelafe92@gmail.com  
+
 
 
 

@@ -25,7 +25,7 @@ Leaders: Sergio Vega Gutiérrez (sergiojvg92@gmail.com), José Manuel de la Fé 
 
 This addon was tested on OpenNebula 4.10 and 4.12, with the 
 frontend installed on Ubuntu 14.04. The host with LXC was a 
-Debian 8 (jessie) PC.
+Debian jessie (8) PC.
 
 
 ## Installation, Configuration and Usage
@@ -38,8 +38,9 @@ http://opennebula.org/
 
 ## License
 
-José Manuel de la Fé Herrero - @jmdelafe
-Sergio Vega Gutiérrez - @sergiojvg
+José Manuel de la Fé Herrero - jmdelafe@gmail.com
+
+Sergio Vega Gutiérrez - sergiojvg92@gmail.com
 
 Licensed under the Apache license, version 2.0 (the "license"); 
 You may not use this file except in compliance with the license. 

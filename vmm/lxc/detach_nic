@@ -23,13 +23,8 @@ MAC=$2
 VM_ID=$6
 
 while read iFACE_MAC; do
-	echo iface_mac=$iFACE_MAC >> /home/kernel/one/detac
         if [ $iFACE_MAC = $MAC ]; then
-		echo entro >> /home/kernel/one/detac
                 iFACE_DEL=$(sudo lxc-attach -n one-$VM_ID ip a | grep -B 1 $MAC | cut -d ':' -f 2 | sed -n '1 p')
-                echo iface_del=$iFACE_del >> /home/kernel/one/detac
 		sudo lxc-attach -n one-$VM_ID ip link delete $iFACE_DEL
-        	echo sudo lxc-attach -n one-$VM_ID ip a | grep -B 1 $MAC | cut -d ':' -f 2 | sed -n '1 p') >> /home/kernel/one/detac
-		echo lxc-attach -n one-$VM_ID ip link delete $iFACE_DEL >> /home/kernel/one/detac
 	fi
 done < <(ip a | grep link/ether | awk '{ print $2 }')

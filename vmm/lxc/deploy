@@ -23,9 +23,6 @@ DEPLOY_FILE=$1
 
 DEPLOY_NUM=$(echo $DEPLOY_FILE | cut -d '.' -f 2)
 
-echo $DEPLOY_FILE > /home/kernel/one/deploy_var
-echo $DEPLOY_NUM >> /home/kernel/one/deploy_var
-
 # First, check if loop devices are up
 if [ ! -f /dev/loop0 ]; then
     sudo losetup -f
@@ -71,9 +68,7 @@ VM_VNC_PASSWD="${XPATH_ELEMENTS[11]}"
 VM_VNC_PORT="${XPATH_ELEMENTS[12]}"
 VM_VNC_LISTEN="${XPATH_ELEMENTS[13]}"
 
-echo cpu=$VM_MEMORY > /home/kernel/one/deploy
-echo id=$VM_ID >> /home/kernel/one/deploy
-echo hostname=$VM_HOSTNAME >> /home/kernel/one/deploy
+
 # Create the directory where the containers will be stored #
 
 sudo chmod 777 /var/lib/lxc
@@ -91,7 +86,6 @@ fi
 
 TOTAL_iFACE=$(xmlstarlet sel -t -v "count(/VM/TEMPLATE/NIC/IP)" /var/lib/one/vms/${VM_ID}/deployment.$DEPLOY_NUM)
 
-sudo echo $TOTAL_iFACE >> /home/kernel/one/var
 
 
 #----
@@ -323,14 +317,11 @@ XML_PARSE=$(xmlstarlet sel -t -v "/VM/TEMPLATE/DISK/DISK_ID" /var/lib/one/vms/${
 while read DISK_ID; do
 	if [ $DISK_ID -ne 0 ]; then
 		lvm=$(sudo lvdisplay | grep lv-one-${VM_ID}-$DISK_ID)
-		echo DI=$DISK_ID >> /home/kernel/one/attach
 		if [ -n "$lvm" ]; then
 			sudo lxc-device -n one-$VM_ID add /dev/vg-one-0/lv-one-${VM_ID}-$DISK_ID
 			sudo lxc-attach -n one-$VM_ID -- mount -o x-mount.mkdir /dev/vg-one-0/lv-one-${VM_ID}-$DISK_ID /media/$DISK_ID
 		else
-			echo DISK_ID=$DISK_ID >> /home/kernel/one/disk_1
         		loop=$(sudo losetup -f --show /var/lib/one/datastores/0/$VM_ID/disk.$DISK_ID)
-			echo loop=$loop >> /home/kernel/one/disk_1
 			sudo lxc-device -n one-$VM_ID add $loop
 			sudo lxc-attach -n one-$VM_ID -- mount -o x-mount.mkdir $loop /media/$DISK_ID
 		fi

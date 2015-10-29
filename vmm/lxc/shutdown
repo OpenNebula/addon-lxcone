@@ -25,7 +25,6 @@
 ##############################################################################
 
 VM_ID=$3
-echo shutdown >> /home/kernel/one/estados
 while read HDDs; do
         if [ ! $HDDs = "disk.0" ]; then
 #		echo lista=$lista >> /home/kernel/one/det
@@ -41,9 +40,7 @@ while read HDDs; do
 #			sudo lxc-attach -e -n one-$VM_ID -- umount -l /dev/vg-one-0/lv-one-${VM_ID}-$DISK_ID
 #		else
 			LOOP_DEV=$(echo $PRE_LOOP | cut -f1 -d":")
-			echo loop_dev=$LOOP_DEV >> /home/kernel/one/det
 			sudo lxc-attach -e -n one-$VM_ID -- umount -l $LOOP_DEV
-			echo lxc-attach -e -n one-$VM_ID -- umount -l $LOOP_DEV >> /home/kernel/one/det
 			sudo losetup -d $LOOP_DEV
         	fi
 	fi
