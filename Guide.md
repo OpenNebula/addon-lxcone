@@ -385,6 +385,8 @@ You can add one using sunstone under **Virtual Resources** --> **Images** --> **
 
 Upload the image created by lxc, located in /var/lib/lxc/**name**/rootdev to OpenNebula. 
 
+![Adding an image file] (picts/Images.png)
+
 #### Warning
 > The image file will be located by default in **/var/lib/lxc/$name/rootdev**. In case LVM is going to be used, remember to upload the image created in step 3.2.
 
@@ -404,6 +406,8 @@ You can add one using sunstone under **Infrastructure** --> **Hosts** --> **ADD*
     * Information. Select Custom.
     * Custom VMM_MAD. Write lxc.
     * Custom IM_MAD. Write lxc.
+
+![Host configuration example] (picts/Host.png)
 
 
 #### 4.4. Create a virtual network
