@@ -26,17 +26,20 @@ is a cloud computing platform for managing heterogeneous distributed data center
 > Commands prefixed by # are meant to be run as root. Commands prefixed by $ must be run as oneadmin.
 
 
-### 1.1. Configure of **Opennebula** repositories
+### 1.1. Configure **Opennebula** repository
 
-Add the OpenNebula repository:
+####Add key for OpenNebula repository:
 ```
 $ wget -q -O- http://downloads.opennebula.org/repo/Ubuntu/repo.key | apt-key add -
 ```
 
-```
-# echo "deb http://downloads.opennebula.org/repo/4.12/Ubuntu/14.04/ stable opennebula" \ > /etc/apt/sources.list.d/opennebula.list
+####Add this line at the end of **/etc/apt/sources.list**:  
+``` 
+deb http://downloads.opennebula.org/repo/4.14/Ubuntu/14.04/ stable opennebula
 ```
 
+
+####Issue an update:
 ```
 # apt-get update
 ```
@@ -66,12 +69,11 @@ Now restart Sunstone:
 #### Warning
 > Skip this section if you are using a single server for both the frontend and worker node roles.
 
-Export **/var/lib/one/** from the frontend to the worker nodes. To do so add the following to the **/etc/exports** file in the `frontend`:
-```
-# echo "/var/lib/one/ *(rw,sync,no_subtree_check,no_root_squash,crossmnt,nohide)" >> /etc/exports
-```
+Export **/var/lib/one/** from the frontend to the worker nodes. To do so add the following at the end of **/etc/exports** in the `frontend`:   
+/var/lib/one/ *(rw,sync,no_subtree_check,no_root_squash,crossmnt,nohide)
 
-Refresh the NFS exports:
+
+####Refresh NFS exports:
 ```
 # service nfs-kernel-server restart
 ```
@@ -79,7 +81,7 @@ Refresh the NFS exports:
 
 ### 1.5. Configure **SSH** public Key
 
-OpenNebula will need to SSH passwordlessly from any node (including the frontend) to any other node. Set public key as authorized key:
+OpenNebula will need to SSH passwordlessly from any node (including the `frontend`) to any other node. Set public key as authorized key:
 ```
 # su - oneadmin
 $ cp ~/.ssh/id_rsa.pub ~/.ssh/authorized_keys
@@ -99,13 +101,10 @@ $ chmod 600 ~/.ssh/config
 
 ### 1.6. Copy and set permissions to the **LXC** drivers
 
-Copy the **lxc** folder under **vmm** to the frontend on **/var/lib/one/remotes/vmm**. 
+Copy the **lxc** folder under **vmm** to the `frontend` on **/var/lib/one/remotes/vmm**. Route to scripts located inside **lxc**, such as **deploy**, should be this one at the end: **/var/lib/one/remotes/vmm/lxc/deploy**.
 
-The files located inside (**deploy**, **cancel**, **shutdown**...) should be in the following path **/var/lib/one/remotes/vmm/lxc/deploy**.
+Copy the **lxc.d** folder under **im** to the `frontend` on **/var/lib/one/remotes/im**. Route to scripts located inside **lxc.d**, such as **mon_lxc.sh**, should be this one at the end: **/var/lib/one/remotes/im/lxc.d/mon_lxc.sh**.
 
-Copy the **lxc.d** folder under **im** to the frontend on **/var/lib/one/remotes/im**.
-
-The files located inside (**monlxc.sh**...) should be in the following path **/var/lib/one/remotes/im/lxc.d/mon_lxc.sh**
 
 Change user, group and permissions:
 ```
@@ -153,7 +152,7 @@ VM_MAD = [ name = "lxc",
 
 ```
 
-We are adding a configuration file example, you can check it.
+We are adding a [configuration file example](oned.conf), you can check it.
 
 Restart **OpenNebula** service.
 ```
@@ -164,17 +163,19 @@ Restart **OpenNebula** service.
 ## 2 - Installation in the Nodes
 
  
-### 2.1. Configure of **Opennebula** repositories
+### 2.1. Configure **Opennebula** repositories
 
-Add the OpenNebula repository:
+####Add key for OpenNebula repository:
 ```
 # wget -q -O- http://downloads.opennebula.org/repo/Ubuntu/repo.key | apt-key add -
 ```
 
+####Add this line at the end of **/etc/apt/sources.list**:    
 ```
-# echo "deb http://downloads.opennebula.org/repo/4.12/Ubuntu/14.04/ stable opennebula" \ > /etc/apt/sources.list.d/opennebula.list
+deb http://downloads.opennebula.org/repo/4.14/Ubuntu/14.04/ stable opennebula
 ```
 
+####Issue an update
 ```
 # apt-get update
 ```
@@ -183,8 +184,9 @@ Add the OpenNebula repository:
 ### 2.2. Install required packages
 
 ```
-# apt-get install opennebula-node nfs-common bridge-utils lxc xmlstarlet x11vnc
+# apt-get install opennebula-node nfs-common bridge-utils lxc xmlstarlet x11vnc libpam-runtime bc
 ```
+
 
 #### Warning
 > We installed the host over Debian 8 (jessie). Packages for Jessie aren't in the Opennebula repositories, but you can manually install them using any package manager (dpkg, GDebi) and watching the dependencies.
@@ -198,7 +200,7 @@ Turn down your network interface
 # ifdown eth0
 ```
 
-Configure the new bridge in /etc/network/interfaces. This is my configuration
+Configure the new bridge in **/etc/network/interfaces**. This is my configuration
 
 This is our config:
 ```
@@ -233,7 +235,7 @@ Turn up the new bridge
 > **eth0** was my primary network adapter, if the name is different in your case, remember to change it in **bridge_ports** option
 
 
-### 2.4. Configure **fstab** to mount **/var/lib/one** from the frontend
+### 2.4. Configure **fstab** to mount **/var/lib/one** from the `frontend`
 
 Add this line to **/etc/fstab**:
 ```
@@ -247,7 +249,10 @@ Mount the directory
 # mount /var/lib/one
 ```
 
-Now, the frontend should be able to SSH inside the host without password using the **oneadmin** user. 
+Now, the `frontend` should be able to SSH inside the host without password using the **oneadmin** user. 
+
+#### Warning
+> With **noauto** option in the fstab line, we are specifying that this mount shouldn't be automatically mounted when system starts. If this folder is not mounted the node won't work, so it will be necesary to manually mount it in case of a reboot. This behavior can be changed but the frontend must be up and running every time the node boots.
 
 
 ### 2.5. Add **oneadmin** to the **sudoers** file, and enable it to run **root** commands without password.
@@ -305,12 +310,13 @@ In case an image datastore wants to be created as LVM this steps will be needed.
 ```
 # pvcreate /dev/sdxx
 ```
+**sdxx** is the disk or partition that will be used by LVM.
 
 #### Creating a volume group
 ```
-# vgcreate /vg-one-<SYSTEM_DATASTORE_ID> /dev/sdxx
+# vgcreate /vg-one-SYSTEM_DATASTORE_ID /dev/sdxx
 ```
-<SYSTEM_DATASTORE_ID> will be 0 if using the default system datastore
+**SYSTEM_DATASTORE_ID** will be 0 if using the default system datastore
 
 
 ## 3 - Create LXC image
@@ -369,9 +375,9 @@ You should specify size a little bigger than **fssize** parameter when creating 
 #### 4.1. Enter the **Sunstone** interface
 
 Log in to `http://192.168.1.1:9869/` address.
-Replace **192.168.1.1** with the frontend ip address.
+Replace **192.168.1.1** with the `frontend` ip address.
 
-The credentials are located in the frontend inside **/var/lib/one/.one/one_auth**. You'll need to be oneadmin user to be able to read this file.
+The credentials are located in the `frontend` inside **/var/lib/one/.one/one_auth**. You'll need to be oneadmin user to be able to read this file.
 
 
 #### 4.2. Upload the image previously created with **LXC** to **OpenNebula** using **Sunstone**
@@ -421,6 +427,8 @@ You can add one using sunstone under **Infrastructure** --> **Virtual Networks**
 * Under **Addresses**:
     * Ip Start. This will be the first address in the pool.
     * Size. Amount of IP addresses OpenNebula can assign after **Ip Start**.
+* Under **Context**:
+    * Add gateway
 
 After this, just click on the **Create** button.
 

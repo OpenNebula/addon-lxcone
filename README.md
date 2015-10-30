@@ -23,7 +23,7 @@ Leaders: Sergio Vega Gutiérrez (sergiojvg92@gmail.com), José Manuel de la Fé 
 
 ## Compatibility
 
-This addon was tested on OpenNebula 4.10 and 4.12, with the 
+This addon was tested on OpenNebula 4.10, 4.12 and 4.14, with the 
 frontend installed on Ubuntu 14.04. The host with LXC was a 
 Debian jessie (8) PC.
 
