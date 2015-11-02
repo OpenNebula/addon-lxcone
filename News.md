@@ -1,0 +1,21 @@
+###V0.1 Beta (2014-07-13)
+
+* Basic, initial version.
+* It's able to:
+    * Deploy and shutdown LXC containers (containers can be deployed with several disks attached).
+    * Monitor nodes and containers.
+    * Limit container's RAM.
+    * Reboot, shutdown, reset and destroy containers.
+
+
+###V0.3 Beta (2014-08-26)
+
+* Several features added:
+    * Support for LVM.
+    * Hot-attach and detach NICs and HDDs (LVM and File-system)
+    * Support for VNC.
+    * Suspend, undeploy, power off and resume containers.
+    * Deploy containers with several NICs and HDDs attached (LVM and File-System)
+* Fixed containers monitorization issues.
+* Fixed issues when adding several HDDs to a container.
+* Improved NICs attachment.

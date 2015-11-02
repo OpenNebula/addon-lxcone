@@ -1,0 +1,338 @@
+#!/bin/bash
+
+# -------------------------------------------------------------------------- #
+# Copyright 2002-2015, OpenNebula Project (OpenNebula.org), C12G Labs        #
+# 									     #
+# Authors: Sergio Vega Gutiérrez          sergiojvg92@gmail.com		     #
+#	   José Manuel de la Fé Herrero   jmdelafe92@gmail.com               #
+#                                                                            #
+# Licensed under the Apache License, Version 2.0 (the "License"); you may    #
+# not use this file except in compliance with the License. You may obtain    #
+# a copy of the License at                                                   #
+#                                                                            #
+# http://www.apache.org/licenses/LICENSE-2.0                                 #
+#                                                                            #
+# Unless required by applicable law or agreed to in writing, software        #
+# distributed under the License is distributed on an "AS IS" BASIS,          #
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.   #
+# See the License for the specific language governing permissions and        #
+# limitations under the License.                                             #
+#--------------------------------------------------------------------------- #
+
+DEPLOY_FILE=$1
+
+DEPLOY_NUM=$(echo $DEPLOY_FILE | cut -d '.' -f 2)
+
+# First, check if loop devices are up
+if [ ! -f /dev/loop0 ]; then
+    sudo losetup -f
+fi
+
+##############################################################################
+#                            	XPATH                                        #
+##############################################################################
+
+XPATH="/var/lib/one/remotes/datastore/xpath.rb --stdin"
+
+unset i j XPATH_ELEMENTS
+
+while read -r -d '' element; do
+    XPATH_ELEMENTS[i++]="$element"
+done < <($XPATH		/VM/ID \
+			/VM/NAME \
+			/VM/TEMPLATE/MEMORY \
+			/VM/TEMPLATE/CPU \
+                        /VM/TEMPLATE/CONTEXT/ETH0_MASK \
+                        /VM/TEMPLATE/NIC/MAC \
+                        /VM/TEMPLATE/CONTEXT/ETH0_GATEWAY \
+			/VM/TEMPLATE/CONTEXT/DISK_ID \
+			/VM/TEMPLATE/DISK/TM_MAD \
+			/VM/TEMPLATE/DISK/IMAGE_ID \
+			/VM/HISTORY_RECORDS/HISTORY/DS_ID \
+			/VM/TEMPLATE/GRAPHICS/PASSWD \
+			/VM/TEMPLATE/GRAPHICS/PORT \
+			/VM/TEMPLATE/GRAPHICS/LISTEN)
+
+VM_ID="${XPATH_ELEMENTS[0]}"
+VM_HOSTNAME="${XPATH_ELEMENTS[1]}"
+VM_MEMORY="${XPATH_ELEMENTS[2]}"
+VM_CPUs="${XPATH_ELEMENTS[3]}"
+VM_NIC_NETMASK="${XPATH_ELEMENTS[4]}"
+VM_NIC_MAC="${XPATH_ELEMENTS[5]}"
+VM_NIC_GATEWAY="${XPATH_ELEMENTS[6]}"
+VM_DISKS="${XPATH_ELEMENTS[7]}"
+VM_TM_DRIVER="${XPATH_ELEMENTS[8]}"
+IMAGE_ID="${XPATH_ELEMENTS[9]}"
+SYSTEM_DATASTORE_ID="${XPATH_ELEMENTS[10]}"
+VM_VNC_PASSWD="${XPATH_ELEMENTS[11]}"
+VM_VNC_PORT="${XPATH_ELEMENTS[12]}"
+VM_VNC_LISTEN="${XPATH_ELEMENTS[13]}"
+
+
+# Create the directory where the containers will be stored #
+
+sudo chmod 777 /var/lib/lxc
+
+if [ ! -d /var/lib/lxc/one-$VM_ID ]; then
+        sudo mkdir -p /var/lib/lxc/one-$VM_ID
+	sudo chown -R oneadmin:oneadmin /var/lib/lxc/one-$VM_ID
+fi
+
+
+
+##############################################################################
+#                            	NETWORK                                      #
+##############################################################################
+
+TOTAL_iFACE=$(xmlstarlet sel -t -v "count(/VM/TEMPLATE/NIC/IP)" /var/lib/one/vms/${VM_ID}/deployment.$DEPLOY_NUM)
+
+
+
+#----
+# IP
+#----
+
+iFACE=0
+XML_PARSE=$(xmlstarlet sel -t -v "/VM/TEMPLATE/NIC/IP" /var/lib/one/vms/${VM_ID}/deployment.$DEPLOY_NUM)
+while read IP; do
+	IP_ETH[$iFACE]=$IP
+	let iFACE=iFACE+1
+done < <(echo -e "$XML_PARSE")
+
+
+#---------
+# NETMASK
+#---------
+
+iFACE=0
+while [ $iFACE -lt $TOTAL_iFACE ]; do
+        RUTA=/VM/TEMPLATE/CONTEXT/ETH${iFACE}_MASK
+        MASK_ETH[$iFACE]=$(xmlstarlet sel -t -v "$RUTA" /var/lib/one/vms/${VM_ID}/deployment.$DEPLOY_NUM)
+
+	if [ -n "${MASK_ETH[$iFACE]}" ]; then
+
+	# Convert netmask to cidr notation #
+
+		nbits=0
+		IFS=.
+		for dec in ${MASK_ETH[$iFACE]} ; do
+        		case $dec in
+                		255) let nbits+=8;;
+                		254) let nbits+=7; break ;;
+                		252) let nbits+=6; break ;;
+                		248) let nbits+=5; break ;;
+                		240) let nbits+=4; break ;;
+                		224) let nbits+=3; break ;;
+                		192) let nbits+=2; break ;;
+                		128) let nbits+=1; break ;;
+                		0);;
+                		*) echo "{$MASK_ETH[$iFACE]} is an invalid netmask. Setting up /24" && export DEFAULT_NETMASK=24;;
+       			esac
+		done
+
+		if [ "${DEFAULT_NETMASK}" = 24 ]
+		then
+			CIDR_MASK_ETH[$iFACE]=24
+		else
+			CIDR_MASK_ETH[$iFACE]=$nbits
+		fi
+	else
+		CIDR_MASK_ETH[$iFACE]=24
+	fi
+
+        let iFACE=iFACE+1
+done
+
+
+#-----
+# MAC
+#-----
+
+iFACE=0
+XML_PARSE=$(xmlstarlet sel -t -v "/VM/TEMPLATE/NIC/MAC" /var/lib/one/vms/${VM_ID}/deployment.$DEPLOY_NUM)
+while read MAC; do
+        MAC_ETH[$iFACE]=$MAC
+        let iFACE=iFACE+1
+done < <(echo -e "$XML_PARSE")
+
+
+#--------
+# BRIDGE
+#--------
+
+iFACE=0
+XML_PARSE=$(xmlstarlet sel -t -v "/VM/TEMPLATE/NIC/BRIDGE" /var/lib/one/vms/${VM_ID}/deployment.$DEPLOY_NUM)
+
+while read BR; do
+        BR_ETH[$iFACE]=$BR
+        let iFACE=iFACE+1
+done < <(echo -e "$XML_PARSE")
+
+
+#---------
+# GATEWAY
+#---------
+
+iFACE=0
+while [ $iFACE -lt $TOTAL_iFACE ]; do
+	RUTA=/VM/TEMPLATE/CONTEXT/ETH${iFACE}_GATEWAY
+	GW_ETH[$iFACE]=$(xmlstarlet sel -t -v "$RUTA" /var/lib/one/vms/${VM_ID}/deployment.$DEPLOY_NUM)
+
+	if [ -n "${GW_ETH[$iFACE]}" ]; then
+		GWs=$iFACE
+		let GWs=GWs-1
+		SAME_GW=0
+		while [ $GWs -gt "-1" ]; do
+			if [ "${GW_ETH[$iFACE]}" = "${GW_ETH[$GWs]}" ]; then
+				SAME_GW=1
+			fi
+			let GWs=GWs-1
+		done
+
+		if [ $SAME_GW == "1" ]; then
+			CONFIG_GW_ETH[$iFACE]="#lxc.network.ipv4.gateway = ${GW_ETH[$iFACE]} Already set up :)"
+		else
+			CONFIG_GW_ETH[$iFACE]="lxc.network.ipv4.gateway = ${GW_ETH[$iFACE]}"
+		fi
+
+	else
+		CONFIG_GW_ETH[$iFACE]="#lxc.network.ipv4.gateway = ${GW_ETH[$iFACE]} No Gateway :("
+	fi
+
+	let iFACE=iFACE+1
+
+done
+
+
+#------------
+#CONFIG-FILE
+#------------
+
+while [ $iFACE -gt "0" ];do
+let iFACE=iFACE-1
+NET_CONFIG="$NET_CONFIG $(cat << EOF
+
+
+# ETH${iFACE}
+lxc.utsname = $VM_HOSTNAME
+lxc.network.type = veth
+lxc.network.veth.pair= ${VM_ID}-eth$iFACE
+lxc.network.flags = up
+lxc.network.link = ${BR_ETH[$iFACE]}
+lxc.network.hwaddr = ${MAC_ETH[$iFACE]}
+lxc.network.ipv4 = ${IP_ETH[$iFACE]}/${CIDR_MASK_ETH[$iFACE]}
+${CONFIG_GW_ETH[$iFACE]}
+EOF
+)"
+done
+
+#############################################################################
+#		        FSTAB. Default option. Not used                     #
+#############################################################################
+
+# Attach extra drives to containers, fstab way #
+#touch /var/lib/lxc/one-$VM_ID/fstab
+
+#DISK=1
+#while [ $DISK -lt $VM_DISKS ]; do
+#	if test -d /media/lxc-hdds/one-$VM_ID/$DISK
+#then
+#	sudo mount /var/lib/one/datastores/$SYSTEM_DATASTORE_ID/$VM_ID/disk.$DISK /media/lxc-hdds/one-$VM_ID/$DISK
+#else
+#	sudo mkdir -p /media/lxc-hdds/one-$VM_ID/$DISK
+#	sudo mount /var/lib/one/datastores/$SYSTEM_DATASTORE_ID/$VM_ID/disk.$DISK /media/lxc-hdds/one-$VM_ID/$DISK
+#	echo "/media/lxc-hdds/one-$VM_ID/$DISK  media/$DISK     none    bind,create=dir 0 0" >> /var/lib/lxc/one-$VM_ID/fstab
+#fi
+#	let DISK=DISK+1
+#done
+
+
+############################################################################
+#			rootfs						  #
+###########################################################################
+
+if [ $VM_TM_DRIVER = "shared" ]; then
+rootfs=loop:/var/lib/one/datastores/$SYSTEM_DATASTORE_ID/$VM_ID/disk.0
+else
+        if [ $VM_TM_DRIVER = "fs_lvm" ]; then
+        rootfs=/dev/vg-one-0/lv-one-${VM_ID}-0
+	else
+		if [ $VM_TM_DRIVER = "lvm" ]; then
+	        rootfs=/dev/opennebula/lv-one-${IMAGE_ID}-${VM_ID}
+		fi
+        fi
+fi
+
+
+
+
+##############################################################################
+#                      GENERATING CONFIG FILE	                             #
+##############################################################################
+
+cat > /var/lib/lxc/one-$VM_ID/config <<EOF
+# Template used to create this container: /usr/share/lxc/templates/lxc-debian
+# Parameters passed to the template:
+# For additional config options, please look at lxc.container.conf(5)
+lxc.rootfs = $rootfs
+
+# Common configuration
+lxc.include = /usr/share/lxc/config/debian.common.conf
+
+# Container specific configuration
+#lxc.mount = /var/lib/lxc/one-$VM_ID/fstab
+lxc.arch = amd64
+lxc.autodev = 1
+lxc.kmsg = 0
+
+# Logs
+lxc.logfile = /var/lib/lxc/one-$VM_ID/one-$VM_ID.log
+lxc.console.logfile = /var/lib/lxc/one-$VM_ID/console.log
+
+# CPU
+#lxc.cgroup.cpuset.cpus =
+#lxc.cgroup.cpu.shares =
+
+# RAM
+lxc.cgroup.memory.limit_in_bytes = ${VM_MEMORY}M
+
+# NETWORK
+$NET_CONFIG
+
+EOF
+
+##############################################################################
+#                  	    INICIAR CONTENEDOR VIRTUAL                       #
+##############################################################################
+
+sudo lxc-start -d -n one-$VM_ID -f /var/lib/lxc/one-$VM_ID/config
+
+
+##############################################################################
+#                               ATACHAR HDDs                                 #
+##############################################################################
+
+XML_PARSE=$(xmlstarlet sel -t -v "/VM/TEMPLATE/DISK/DISK_ID" /var/lib/one/vms/${VM_ID}/deployment.$DEPLOY_NUM)
+
+while read DISK_ID; do
+	if [ $DISK_ID -ne 0 ]; then
+		lvm=$(sudo lvdisplay | grep lv-one-${VM_ID}-$DISK_ID)
+		if [ -n "$lvm" ]; then
+			sudo lxc-device -n one-$VM_ID add /dev/vg-one-0/lv-one-${VM_ID}-$DISK_ID
+			sudo lxc-attach -n one-$VM_ID -- mount -o x-mount.mkdir /dev/vg-one-0/lv-one-${VM_ID}-$DISK_ID /media/$DISK_ID
+		else
+        		loop=$(sudo losetup -f --show /var/lib/one/datastores/0/$VM_ID/disk.$DISK_ID)
+			sudo lxc-device -n one-$VM_ID add $loop
+			sudo lxc-attach -n one-$VM_ID -- mount -o x-mount.mkdir $loop /media/$DISK_ID
+		fi
+	fi
+done < <(echo -e "$XML_PARSE")
+
+##############################################################################
+#                              	     VNC                                     #
+##############################################################################
+
+if [ -n "${VM_VNC_PASSWD}" ]; then
+# Start VNC server
+	sudo vncterm -timeout 0 -passwd ${VM_VNC_PASSWD} -rfbport $VM_VNC_PORT -c lxc-console -n one-$VM_ID &
+fi

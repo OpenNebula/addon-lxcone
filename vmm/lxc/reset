@@ -1,0 +1,61 @@
+#!/bin/bash
+
+# -------------------------------------------------------------------------- #
+# Copyright 2002-2015, OpenNebula Project (OpenNebula.org), C12G Labs        #
+# 									     #
+# Authors: Sergio Vega Gutiérrez          sergiojvg92@gmail.com		     #
+#	   José Manuel de la Fé Herrero   jmdelafe92@gmail.com               #
+#                                                                            #
+# Licensed under the Apache License, Version 2.0 (the "License"); you may    #
+# not use this file except in compliance with the License. You may obtain    #
+# a copy of the License at                                                   #
+#                                                                            #
+# http://www.apache.org/licenses/LICENSE-2.0                                 #
+#                                                                            #
+# Unless required by applicable law or agreed to in writing, software        #
+# distributed under the License is distributed on an "AS IS" BASIS,          #
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.   #
+# See the License for the specific language governing permissions and        #
+# limitations under the License.                                             #
+#--------------------------------------------------------------------------- #
+
+##############################################################################
+#                     SUSPENDER CONTENEDOR VIRTUAL                           #
+##############################################################################
+
+VM_ID=$3
+
+VM_VNC_PASSWD=$(xmlstarlet sel -t -v "/VM/TEMPLATE/GRAPHICS/PASSWD" /var/lib/one/vms/${VM_ID}/deployment.0)
+VM_VNC_PORT=$(xmlstarlet sel -t -v "/VM/TEMPLATE/GRAPHICS/PORT" /var/lib/one/vms/${VM_ID}/deployment.0)
+
+
+#echo reboot >> /home/kernel/one/estados
+#while read HDDs; do
+#        if [ ! $HDDs = "disk.0" ]; then
+#                PRE_LOOP=$(sudo losetup -j /var/lib/one/datastores/0/$VM_ID/$lista)
+#                if [ -n "$PRE_LOOP" ]; then
+#                        LOOP_DEV=$(echo $PRE_LOOP | cut -f1 -d":")
+#                        echo loop_dev=$LOOP_DEV >> /home/kernel/one/det
+#                        sudo lxc-attach -e -n one-$VM_ID -- umount -l $LOOP_DEV
+#                        echo lxc-attach -e -n one-$VM_ID -- umount -l $LOOP_DEV >> /home/kernel/one/det
+#                        sudo losetup -d $LOOP_DEV
+#                fi
+#        fi
+#done < <(ls -1 /var/lib/one/datastores/0/${VM_ID})
+
+#while read iface; do
+#sudo lxc-attach -n one-$VM_ID ip link delete $iface
+#done < <(ip a | grep ${VM_ID}-eth | awk '{ print $2 }' | cut -d '-' -f 2 | cut -d ':' -f 1)
+
+
+sudo lxc-stop -n one-${VM_ID}
+
+sudo lxc-wait -n one-${VM_ID} -s STOPPED
+
+sudo lxc-start -d -n one-${VM_ID} -f /var/lib/lxc/one-${VM_ID}/config
+
+
+if [ -n "${VM_VNC_PASSWD}" ]; then
+# Start VNC server
+        sudo vncterm -timeout 0 -passwd ${VM_VNC_PASSWD} -rfbport ${VM_VNC_PORT} -c lxc-console -n one-$VM_ID &
+fi
