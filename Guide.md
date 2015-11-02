@@ -11,11 +11,9 @@ Throughout the installation there are two separate roles: `frontend` and `nodes`
 > We built and tested this drivers with the frontend installed on Ubuntu 14.04 (Trusty Tahr) and the nodes on Debian 8 (Jessie)
 
 
-[LXC](https://linuxcontainers.org/lxc/)
-is a userspace interface for the Linux kernel containment features. Through a powerful API and simple tools, it lets Linux users easily create and manage system or application containers.
+[LXC](https://linuxcontainers.org/lxc/) is a userspace interface for the Linux kernel containment features. Through a powerful API and simple tools, it lets Linux users easily create and manage system or application containers.
 
-[OpenNebula](http://opennebula.org/)
-is a cloud computing platform for managing heterogeneous distributed data center infrastructures. The OpenNebula platform manages a data center's virtual infrastructure to build private, public and hybrid implementations of infrastructure as a service. OpenNebula is free and open-source software, subject to the requirements of the Apache License version 2.
+[OpenNebula](http://opennebula.org/) is a cloud computing platform for managing heterogeneous distributed data center infrastructures. The OpenNebula platform manages a data center's virtual infrastructure to build private, public and hybrid implementations of infrastructure as a service. OpenNebula is free and open-source software, subject to the requirements of the Apache License version 2.
 
 
 
