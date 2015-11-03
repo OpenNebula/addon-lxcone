@@ -327,6 +327,9 @@ In case an image datastore wants to be created as LVM this steps will be needed.
 # lxc-create -t debian -B loop --fssize=3G -n name
 ```
 
+#### Warning
+> If this command fails, try running it again.
+
 We just created a 3Gb raw image with a linux container inside. The raw image file will be located at **/var/lib/lxc/name/rootdev**. 
 **name** will be the name of the container.
 
