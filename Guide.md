@@ -200,7 +200,7 @@ Turn down your network interface
 # ifdown eth0
 ```
 
-Configure the new bridge in **/etc/network/interfaces**. This is my configuration
+Configure the new bridge in **/etc/network/interfaces**. This is our configuration
 
 This is our config:
 ```
@@ -232,7 +232,7 @@ Turn up the new bridge
 ```
 
 #### Note
-> **eth0** was my primary network adapter, if the name is different in your case, remember to change it in **bridge_ports** option
+> **eth0** was our primary network adapter, if the name is different in your case, remember to change it in **bridge_ports** option
 
 
 ### 2.4. Configure **fstab** to mount **/var/lib/one** from the `frontend`
