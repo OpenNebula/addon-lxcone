@@ -19,6 +19,8 @@
 # limitations under the License.                                             #
 #--------------------------------------------------------------------------- #
 
+#source $(dirname $0)/kvmrc
+source $(dirname $0)/../../scripts_common.sh
 
 ##############################################################################
 #                         RESTORE CONTENEDOR VIRTUAL                         #
@@ -26,5 +28,5 @@
 
 VM_ID=$4
 
-sudo lxc-unfreeze -n one-$VM_ID
+exec_and_log "sudo lxc-unfreeze -n one-$VM_ID"
 

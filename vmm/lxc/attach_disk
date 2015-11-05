@@ -19,6 +19,8 @@
 # limitations under the License.                                             #
 #--------------------------------------------------------------------------- #
 
+#source $(dirname $0)/kvmrc
+source $(dirname $0)/../../scripts_common.sh
 
 DOMAIN=$1
 SOURCE=$2
@@ -31,9 +33,10 @@ LVM_LV=$(sudo lvdisplay | grep lv-one-${VM_ID}-$TARGET_INDEX)
 
 if [ -n "$LVM_LV" ]; then
 	sudo lxc-device -n one-$VM_ID add /dev/vg-one-0/lv-one-${VM_ID}-$TARGET_INDEX
-	sudo lxc-attach -n one-$VM_ID -- mount -o x-mount.mkdir /dev/vg-one-0/lv-one-${VM_ID}-$TARGET_INDEX /media/$TARGET_INDEX
+	exec_and_log "sudo lxc-attach -n one-$VM_ID -- mount -o x-mount.mkdir /dev/vg-one-0/lv-one-${VM_ID}-$TARGET_INDEX /media/$TARGET_INDEX"
 else
 	LOOP=$(sudo losetup -f --show /var/lib/one/datastores/0/$VM_ID/disk.$TARGET_INDEX)
 	sudo lxc-device -n one-$VM_ID add $LOOP
-	sudo lxc-attach -n one-$VM_ID -- mount -o x-mount.mkdir $LOOP /media/$TARGET_INDEX
+	exec_and_log "sudo lxc-attach -n one-$VM_ID -- mount -o x-mount.mkdir $LOOP /media/$TARGET_INDEX"
 fi
+

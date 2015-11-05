@@ -1,11 +1,11 @@
 #!/bin/bash
 
 # -------------------------------------------------------------------------- #
-# Copyright 2002-2015, OpenNebula Project (OpenNebula.org), C12G Labs        #
-# 									     #
-# Authors: Sergio Vega Gutiérrez          sergiojvg92@gmail.com		     #
-#	   José Manuel de la Fé Herrero   jmdelafe92@gmail.com               #
+# Copyright 2002-2015, OpenNebula Project, OpenNebula Systems                #
 #                                                                            #
+# Authors: Sergio Vega Gutiérrez          sergiojvg92@gmail.com              #
+#          José Manuel de la Fé Herrero   jmdelafe92@gmail.com               #
+#									     #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may    #
 # not use this file except in compliance with the License. You may obtain    #
 # a copy of the License at                                                   #
@@ -19,13 +19,16 @@
 # limitations under the License.                                             #
 #--------------------------------------------------------------------------- #
 
+#source $(dirname $0)/kvmrc
+source $(dirname $0)/../../scripts_common.sh
+
 DEPLOY_FILE=$1
 
 DEPLOY_NUM=$(echo $DEPLOY_FILE | cut -d '.' -f 2)
 
 # First, check if loop devices are up
 if [ ! -f /dev/loop0 ]; then
-    sudo losetup -f
+ sudo losetup -f
 fi
 
 ##############################################################################
@@ -38,12 +41,12 @@ unset i j XPATH_ELEMENTS
 
 while read -r -d '' element; do
     XPATH_ELEMENTS[i++]="$element"
-done < <($XPATH		/VM/ID \
+done < <($XPATH 	/VM/ID \
 			/VM/NAME \
 			/VM/TEMPLATE/MEMORY \
 			/VM/TEMPLATE/CPU \
                         /VM/TEMPLATE/CONTEXT/ETH0_MASK \
-                        /VM/TEMPLATE/NIC/MAC \
+                       	/VM/TEMPLATE/NIC/MAC \
                         /VM/TEMPLATE/CONTEXT/ETH0_GATEWAY \
 			/VM/TEMPLATE/CONTEXT/DISK_ID \
 			/VM/TEMPLATE/DISK/TM_MAD \
@@ -68,13 +71,14 @@ VM_VNC_PASSWD="${XPATH_ELEMENTS[11]}"
 VM_VNC_PORT="${XPATH_ELEMENTS[12]}"
 VM_VNC_LISTEN="${XPATH_ELEMENTS[13]}"
 
+VM_HOSTNAME_FIXED=${VM_HOSTNAME// /-}
 
 # Create the directory where the containers will be stored #
 
-sudo chmod 777 /var/lib/lxc
+#sudo chmod 644 /var/lib/lxc
 
 if [ ! -d /var/lib/lxc/one-$VM_ID ]; then
-        sudo mkdir -p /var/lib/lxc/one-$VM_ID
+	sudo mkdir -p /var/lib/lxc/one-$VM_ID
 	sudo chown -R oneadmin:oneadmin /var/lib/lxc/one-$VM_ID
 fi
 
@@ -266,10 +270,55 @@ fi
 
 
 
+
+
+
+##############################################################################
+#                         CREATING HOOKS	                             #
+##############################################################################
+
+cat > /var/lib/lxc/one-$VM_ID/start-hook <<EOF
+#!/bin/bash
+sed -i s/"lxc.start.auto = 0"/"lxc.start.auto = 1"/g /var/lib/lxc/one-$VM_ID/config
+at now -f /var/lib/lxc/one-$VM_ID/vnc
+EOF
+
+cat > /var/lib/lxc/one-$VM_ID/stop-hook <<EOF
+#!/bin/bash
+sed -i s/"lxc.start.auto = 1"/"lxc.start.auto = 0"/g /var/lib/lxc/one-$VM_ID/config
+EOF
+
+
+#######
+# VNC #
+#######
+
+
+cat > /var/lib/lxc/one-$VM_ID/vnc <<EOF
+#!/bin/bash
+
+VM_VNC_PASSWD=${VM_VNC_PASSWD}
+
+sudo lxc-wait -n one-$VM_ID -s RUNNING
+
+## VNC
+if [ -n "${VM_VNC_PASSWD}" ]; then
+sudo vncterm -timeout 0 -passwd ${VM_VNC_PASSWD} -rfbport $VM_VNC_PORT -c lxc-console -n one-$VM_ID &
+fi
+
+## Setting the VM Hostname after making sure there are no space chars on the hostname
+
+sudo lxc-attach -e -n one-$VM_ID -- hostname $VM_HOSTNAME_FIXED
+
+EOF
+
+sudo chmod 755 /var/lib/lxc/one-$VM_ID/start-hook
+sudo chmod 755 /var/lib/lxc/one-$VM_ID/stop-hook
+sudo chmod 755 /var/lib/lxc/one-$VM_ID/vnc
+
 ##############################################################################
 #                      GENERATING CONFIG FILE	                             #
 ##############################################################################
-
 cat > /var/lib/lxc/one-$VM_ID/config <<EOF
 # Template used to create this container: /usr/share/lxc/templates/lxc-debian
 # Parameters passed to the template:
@@ -299,14 +348,22 @@ lxc.cgroup.memory.limit_in_bytes = ${VM_MEMORY}M
 # NETWORK
 $NET_CONFIG
 
+# Autostart
+lxc.start.auto = 0
+
+#hooks
+lxc.hook.pre-start = /var/lib/lxc/one-$VM_ID/start-hook
+lxc.hook.post-stop = /var/lib/lxc/one-$VM_ID/stop-hook
+
+
 EOF
 
 ##############################################################################
 #                  	    INICIAR CONTENEDOR VIRTUAL                       #
 ##############################################################################
 
-sudo lxc-start -d -n one-$VM_ID -f /var/lib/lxc/one-$VM_ID/config
-
+exec_and_log "sudo lxc-start -d -n one-$VM_ID -f /var/lib/lxc/one-$VM_ID/config"
+sudo lxc-wait -n one-$VM_ID -s RUNNING
 
 ##############################################################################
 #                               ATACHAR HDDs                                 #
@@ -327,12 +384,3 @@ while read DISK_ID; do
 		fi
 	fi
 done < <(echo -e "$XML_PARSE")
-
-##############################################################################
-#                              	     VNC                                     #
-##############################################################################
-
-if [ -n "${VM_VNC_PASSWD}" ]; then
-# Start VNC server
-	sudo vncterm -timeout 0 -passwd ${VM_VNC_PASSWD} -rfbport $VM_VNC_PORT -c lxc-console -n one-$VM_ID &
-fi

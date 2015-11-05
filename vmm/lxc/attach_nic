@@ -19,11 +19,16 @@
 # limitations under the License.                                             #
 #--------------------------------------------------------------------------- #
 
+#source $(dirname $0)/kvmrc
+source $(dirname $0)/../../scripts_common.sh
+
 DOMAIN=$1
 MAC=$2
-SOURCE=$3
+BRIDGE=$3
 MODEL=$4
+NET_DRV=$5
 ID=$6
+
 
 iFACE=0
 NIC=$(ip a | grep ${ID}-eth$iFACE)
@@ -37,6 +42,7 @@ done
 VM_PID=$(sudo lxc-info -pHn one-$ID)
 
 sudo ip link add name ${ID}-eth${iFACE} type veth peer name ${ID}-eth${iFACE}-c
-sudo brctl addif br0 ${ID}-eth${iFACE}
-sudo ip link set dev ${ID}-eth${iFACE}-c netns $VM_PID name eth${iFACE} address $MAC
+sudo brctl addif $BRIDGE ${ID}-eth${iFACE}
+exec_and_log "sudo ip link set dev ${ID}-eth${iFACE}-c netns $VM_PID name eth${iFACE} address $MAC"
 sudo ip link set ${ID}-eth${iFACE} up
+

@@ -19,8 +19,8 @@
 # limitations under the License.                                             #
 #--------------------------------------------------------------------------- #
 
-
-VM_ID=$3
+#source $(dirname $0)/kvmrc
+source $(dirname $0)/../../scripts_common.sh
 
 VM_ID=$3
 
@@ -35,11 +35,10 @@ while read HDDs; do
         fi
 done < <(ls -1 /var/lib/one/datastores/0/$VM_ID)
 
-while read iface; do
-sudo lxc-attach -n one-$VM_ID ip link delete $iface
+while read iFACE; do
+sudo lxc-attach -n one-$VM_ID ip link delete $iFACE
 done < <(ip a | grep ${VM_ID}-eth | awk '{ print $2 }' | cut -d '-' -f 2 | cut -d ':' -f 1)
 
 
-sudo lxc-stop -n one-${VM_ID}
-sudo rm -rf /var/lib/lxc/one-${VM_ID} 
-
+exec_and_log "sudo lxc-stop -n one-${VM_ID}"
+exec_and_log "sudo rm -rf /var/lib/lxc/one-${VM_ID}" "Can't delete container's folder (/var/lib/lxc/one-${VM_ID})"

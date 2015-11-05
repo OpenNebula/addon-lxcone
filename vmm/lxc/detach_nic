@@ -19,12 +19,15 @@
 # limitations under the License.                                             #
 #--------------------------------------------------------------------------- #
 
+#source $(dirname $0)/kvmrc
+source $(dirname $0)/../../scripts_common.sh
+
 MAC=$2
 VM_ID=$6
 
 while read iFACE_MAC; do
         if [ $iFACE_MAC = $MAC ]; then
                 iFACE_DEL=$(sudo lxc-attach -n one-$VM_ID ip a | grep -B 1 $MAC | cut -d ':' -f 2 | sed -n '1 p')
-		sudo lxc-attach -n one-$VM_ID ip link delete $iFACE_DEL
+		exec_and_log "sudo lxc-attach -n one-$VM_ID ip link delete $iFACE_DEL"
 	fi
 done < <(ip a | grep link/ether | awk '{ print $2 }')

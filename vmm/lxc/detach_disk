@@ -19,6 +19,8 @@
 # limitations under the License.                                             #
 #--------------------------------------------------------------------------- #
 
+#source $(dirname $0)/kvmrc
+source $(dirname $0)/../../scripts_common.sh
 
 DOMAIN=$1
 SOURCE=$2
@@ -36,6 +38,6 @@ if [ -n "$LVM_LV" ]; then
 else
 	PRE_LOOP=$(sudo losetup -j /var/lib/one/datastores/0/$VM_ID/disk.$TARGET_INDEX)
 	LOOP_DEV=$(echo $PRE_LOOP | cut -f1 -d":")
-	sudo lxc-attach -e -n one-$VM_ID -- umount -l $LOOP_DEV
-	sudo losetup -d $LOOP_DEV
+	exec_and_log "sudo lxc-attach -e -n one-$VM_ID -- umount -l $LOOP_DEV"
+	sudo losetup -d $LOOP_DEV"
 fi
