@@ -1,4 +1,4 @@
-###V0.1 Beta (2014-07-13)
+###V0.1 Beta (2015-07-13)
 
 * Basic, initial version.
 * It's able to:
@@ -8,7 +8,7 @@
     * Reboot, shutdown, reset and destroy containers.
 
 
-###V0.3 Beta (2014-08-26)
+###V0.3 Beta (2015-08-26)
 
 * Several features added:
     * Support for LVM.
@@ -21,7 +21,8 @@
 * Improved NICs attachment.
 
 
-###V0.3 Beta (2014-09-05)
+###V0.4 Beta (2015-11-05)
+
 * Improved error handling.
 * Guide updated.
 * Running containers will automatically start if node gets restarted.
