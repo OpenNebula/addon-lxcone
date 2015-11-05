@@ -132,7 +132,7 @@ Under **Information Driver Configuration** add this:
 IM_MAD = [
  name = "lxc",
  executable = "one_im_ssh",
- arguments = "-c -t 1 -r 0 lxc" ]
+ arguments = "-t 20 -r 0 lxc" ]
 #-------------------------------------------------------------------------------
 
 ```
@@ -159,6 +159,9 @@ Restart **OpenNebula** service.
 # service opennebula restart
 ```
 
+#### Warning
+> By default, Opennebula-sunstone doesn't automatically starts with the system. To change this, add **service opennebula-sunstone start** to **/etc/rc.local**.
+
 
 ## 2 - Installation in the Nodes
 
@@ -184,7 +187,7 @@ deb http://downloads.opennebula.org/repo/4.14/Ubuntu/14.04/ stable opennebula
 ### 2.2. Install required packages
 
 ```
-# apt-get install opennebula-node nfs-common bridge-utils lxc xmlstarlet x11vnc libpam-runtime bc
+# apt-get install opennebula-node nfs-common bridge-utils lxc xmlstarlet x11vnc libpam-runtime bc at
 ```
 
 
@@ -200,7 +203,7 @@ Turn down your network interface
 # ifdown eth0
 ```
 
-Configure the new bridge in **/etc/network/interfaces**. This is our configuration
+Configure the new bridge in **/etc/network/interfaces**. This is my configuration
 
 This is our config:
 ```
@@ -232,14 +235,14 @@ Turn up the new bridge
 ```
 
 #### Note
-> **eth0** was our primary network adapter, if the name is different in your case, remember to change it in **bridge_ports** option
+> **eth0** was my primary network adapter, if the name is different in your case, remember to change it in **bridge_ports** option
 
 
 ### 2.4. Configure **fstab** to mount **/var/lib/one** from the `frontend`
 
 Add this line to **/etc/fstab**:
 ```
-192.168.1.1:/var/lib/one/ /var/lib/one/ nfs soft,intr,rsize=8192,wsize=8192,noauto
+192.168.1.1:/var/lib/one/ /var/lib/one/ nfs soft,intr,rsize=8192,wsize=8192,auto
 ```
 
 Replace **192.168.1.1** with the frontend's ip address.
@@ -252,7 +255,7 @@ Mount the directory
 Now, the `frontend` should be able to SSH inside the host without password using the **oneadmin** user. 
 
 #### Warning
-> With **noauto** option in the fstab line, we are specifying that this mount shouldn't be automatically mounted when system starts. If this folder is not mounted the node won't work, so it will be necesary to manually mount it in case of a reboot. This behavior can be changed but the frontend must be up and running every time the node boots.
+> Node will automatically try to mount /var/lib/one every time it starts. This is recommended, specially if you are using shared storage, but an error will occur if the frontend is down when the node boots up. If this happen, manually mount /var/lib/one and everything should be fine.
 
 
 ### 2.5. Add **oneadmin** to the **sudoers** file, and enable it to run **root** commands without password.
@@ -290,7 +293,9 @@ Every File System image used by LXC through this driver will require one loop de
 
 Write **options loop max_loop=64** to **/etc/modprobe.d/local-loop.conf**
 
-**Reboot** host to enable changes in previous steps.
+Activate loop module to linux kernel. For this, write **loop** at then end of **/etc/modules**.
+
+**Reboot** host to enable changes from previous steps.
 
 ### 2.8. Configure LVM Datastore [Optional]
 

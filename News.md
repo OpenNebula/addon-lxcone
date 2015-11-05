@@ -19,3 +19,15 @@
 * Fixed containers monitorization issues.
 * Fixed issues when adding several HDDs to a container.
 * Improved NICs attachment.
+
+
+###V0.3 Beta (2014-09-05)
+* Improved error handling.
+* Guide updated.
+* Running containers will automatically start if node gets restarted.
+* VNC improved.
+* Several bugs fixed:
+	* Fixed issues with container's hostname.
+	* Fixed issues with reboot and hard reboot.
+	* Fixed bridge selection in NIC hot-attaching.
+
