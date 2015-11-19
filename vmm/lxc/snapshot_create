@@ -1,0 +1,29 @@
+#!/bin/bash
+
+#source $(dirname $0)/lxcrc
+source $(dirname $0)/../../scripts_common.sh
+
+SNAP_ID="$2"
+VM_ID="$3"
+#HOST="$4"
+DOMAIN="one-${VM_ID}"
+
+sudo mkdir -p /var/lib/lxc/${DOMAIN}/snaps/${SNAP_ID}/disks
+
+sudo lxc-freeze -n $DOMAIN
+
+sudo rsync -zqrtaLp /var/lib/lxc/${DOMAIN}/ --exclude=snaps --exclude=rootfs.dev /var/lib/lxc/${DOMAIN}/snaps/${SNAP_ID}
+
+sudo rsync -zqrtLap /var/lib/one/datastores/0/${VM_ID}/ --exclude=*.iso /var/lib/lxc/${DOMAIN}/snaps/${SNAP_ID}/disks
+
+if [ "$?" = "0" ]; then
+    echo "${SNAP_ID}"
+else
+    sudo lxc-unfreeze -n $DOMAIN
+    error_message "Could not create snapshot $NAME for domain $DOMAIN."
+    exit -1
+fi
+
+sudo lxc-unfreeze -n $DOMAIN
+
+exit 0

@@ -1,0 +1,78 @@
+#!/bin/bash
+
+# -------------------------------------------------------------------------- #
+# Copyright 2002-2015, OpenNebula Project (OpenNebula.org), C12G Labs        #
+#                                                                            #
+# Authors: Sergio Vega Gutiérrez          sergiojvg92@gmail.com              #
+#          José Manuel de la Fé Herrero   jmdelafe92@gmail.com               #
+#                                                                            #
+# Licensed under the Apache License, Version 2.0 (the "License"); you may    #
+# not use this file except in compliance with the License. You may obtain    #
+# a copy of the License at                                                   #
+#                                                                            #
+# http://www.apache.org/licenses/LICENSE-2.0                                 #
+#                                                                            #
+# Unless required by applicable law or agreed to in writing, software        #
+# distributed under the License is distributed on an "AS IS" BASIS,          #
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.   #
+# See the License for the specific language governing permissions and        #
+# limitations under the License.                                             #
+#--------------------------------------------------------------------------- #
+
+echo "VM_POLL=YES"
+
+sudo lxc-ls --fancy | grep one- | while read VM; do
+	DEPLOY_ID=$(echo $VM | awk '{ print $1 }')
+	VM_ID=$(echo $DEPLOY_ID | cut -d- -f2)
+	VM_STATE=$(echo $VM | awk '{ print $2 }')
+	VM_IP=$(echo $VM | awk '{ print $3 }')
+
+	case $VM_STATE in
+		RUNNING)	STATE=a ;
+				POLL="STATE=$STATE"
+
+				# Gathering info...
+
+				# RAM
+				rMEMORY=$(sudo lxc-info -n $DEPLOY_ID | grep Memory | awk '{ print $3 }')
+				USEDMEMORY=$(sudo bc <<< ${rMEMORY}*1024)
+
+				if [ -n "$USEDMEMORY" ]; then
+				POLL="$POLL USEDMEMORY=${USEDMEMORY}"
+				fi
+
+				# CPU
+		        	rCPU=$(sudo lxc-attach -n $DEPLOY_ID -- top -d 0.5 -n 2 -b | grep "Cpu" | awk '{ print $2 }')
+	       			USEDCPU=$(echo $rCPU | awk '{ print $2 }')
+
+				if [ -n "$USEDCPU" ]; then
+				POLL="$POLL USEDCPU=${USEDCPU}"
+				fi
+
+				if [ "${VM_IP}" != "-" ]; then
+
+        				# NETWORK
+	        			read rNETRX rNETTX <<< `/sbin/ifconfig ${VM_ID}-eth0 | grep "RX bytes" | awk ' { print $2 " " $6 } '`
+	        			NETTX=${rNETRX/*:}
+	        			NETRX=${rNETTX/*:}
+
+		        		POLL="$POLL NETTX=$NETTX NETRX=$NETTX}"
+
+		        	fi ;;
+
+		FROZEN) 	STATE=p ;
+				POLL="STATE=$STATE" ;;
+		STOPPED) 	STATE=d ;
+				POLL="STATE=$STATE" ;;
+		*)		STATE=e ;
+				POLL="STATE=$STATE" ;;
+	esac
+
+cat <<EOT
+VM=[
+ ID=${VM_ID},
+ DEPLOY_ID=${DEPLOY_ID},
+ POLL="$POLL" ]
+EOT
+
+done
