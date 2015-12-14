@@ -38,7 +38,7 @@ sudo lxc-ls --fancy | grep one- | while read VM; do
 				USEDMEMORY=$(sudo bc <<< ${rMEMORY}*1024)
 
 				if [ -n "$USEDMEMORY" ]; then
-				POLL="$POLL USEDMEMORY=${USEDMEMORY}"
+				POLL="$POLL MEMORY=${USEDMEMORY}"
 				fi
 
 				# CPU
@@ -46,7 +46,7 @@ sudo lxc-ls --fancy | grep one- | while read VM; do
 	       			USEDCPU=$(echo $rCPU | awk '{ print $2 }')
 
 				if [ -n "$USEDCPU" ]; then
-				POLL="$POLL USEDCPU=${USEDCPU}"
+				POLL="$POLL CPU=${USEDCPU}"
 				fi
 
 				if [ "${VM_IP}" != "-" ]; then
