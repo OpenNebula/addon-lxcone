@@ -24,8 +24,8 @@ Leaders: Sergio Vega Gutiérrez (sergiojvg92@gmail.com), José Manuel de la Fé 
 ## Compatibility
 
 This addon was tested on OpenNebula 4.10, 4.12 and 4.14, with the 
-frontend installed on Ubuntu 14.04. The host with LXC was a 
-Debian jessie (8) PC.
+frontend installed on Ubuntu 14.04 and Debian 8 (Jessie). The host with LXC was a 
+Debian 8 (Jessie) PC.
 
 
 ## Installation, Configuration and Usage
