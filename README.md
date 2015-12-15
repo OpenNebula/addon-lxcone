@@ -33,8 +33,8 @@ Use this guide:
 https://github.com/OpenNebula/addon-lxcone/blob/master/Guide.md
 
 ## References
-https://linuxcontainers.org/
-http://opennebula.org/
+[LXC] (https://linuxcontainers.org/)
+[OpenNebula] (http://opennebula.org/)
 
 ## License
 
