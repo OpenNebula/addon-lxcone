@@ -3,8 +3,8 @@
 # -------------------------------------------------------------------------- #
 # Copyright 2014-2015, OpenNebula Project (OpenNebula.org), C12G Labs        #
 #                                                                            #
-# Authors: José Manuel de la Fé Herrero   jmdelafe92@gmail.com               #
-#          Sergio Vega Gutiérrez          sergiojvg92@gmail.com              #
+# Authors: Sergio Vega Gutiérrez          sergiojvg92@gmail.com              #
+#          José Manuel de la Fé Herrero   jmdelafe92@gmail.com               #
 #                                                                            #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may    #
 # not use this file except in compliance with the License. You may obtain    #
@@ -21,6 +21,7 @@
 
 #source $(dirname $0)/lxcrc
 source $(dirname $0)/../../scripts_common.sh
+
 
 #DOMAIN=$1
 DISK_SOURCE=$2
@@ -44,7 +45,7 @@ case $DS_TYPE in
 		start_line=$(grep -in "#--------------------Mounting disk $DISK_ID on one-${VM_ID}--------------------#" /var/lib/lxc/one-$VM_ID/vnc | awk 'NR==1' | cut -d ':' -f 1)
 		end_line=$(($start_line+8))
 		sed "$start_line,$end_line d" /var/lib/lxc/one-$VM_ID/vnc > /var/lib/lxc/one-$VM_ID/vnc_tmp && mv /var/lib/lxc/one-$VM_ID/vnc_tmp /var/lib/lxc/one-$VM_ID/vnc;;
-	vg-one*) start_line=$(grep -in "#--------------------Mounting disk $DSK_ID on one-${VM_ID}--------------------#" /var/lib/lxc/one-$VM_ID/vnc | awk 'NR==1' | cut -d ':' -f 1)
+	vg-one*) start_line=$(grep -in "#--------------------Mounting disk $DISK_ID on one-${VM_ID}--------------------#" /var/lib/lxc/one-$VM_ID/vnc | awk 'NR==1' | cut -d ':' -f 1)
 		end_line=$(($start_line+3))
 		sed "$start_line,$end_line d" /var/lib/lxc/one-$VM_ID/vnc > /var/lib/lxc/one-$VM_ID/vnc_tmp && mv /var/lib/lxc/one-$VM_ID/vnc_tmp /var/lib/lxc/one-$VM_ID/vnc;;
 esac

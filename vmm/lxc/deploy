@@ -1,11 +1,11 @@
 #!/bin/bash
 
 # -------------------------------------------------------------------------- #
-# Copyright 2014-2015, OpenNebula Project (OpenNebula.org), C12G Labs        #
+# Copyright 2014-2015, OpenNebula Project, OpenNebula Systems                #
 #                                                                            #
-# Authors: José Manuel de la Fé Herrero   jmdelafe92@gmail.com               #
-#          Sergio Vega Gutiérrez          sergiojvg92@gmail.com              #
-#                                                                            #
+# Authors: Sergio Vega Gutiérrez          sergiojvg92@gmail.com              #
+#          José Manuel de la Fé Herrero   jmdelafe92@gmail.com               #
+#									     #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may    #
 # not use this file except in compliance with the License. You may obtain    #
 # a copy of the License at                                                   #
@@ -19,7 +19,7 @@
 # limitations under the License.                                             #
 #--------------------------------------------------------------------------- #
 
-#source $(dirname $0)/lxcrc
+#source $(dirname $0)/kvmrc
 source $(dirname $0)/../../scripts_common.sh
 
 DEPLOY_FILE=$1
@@ -284,7 +284,6 @@ case $VM_DISK_TYPE in
                 echo "if [ \"\$just_reboot\" = \"0\" ]; then" >> /var/lib/lxc/one-$VM_ID/stop-hook
                 echo "start_line=\$(grep -in \"lxc-start -d -n one-$VM_ID\" /etc/rc.local | cut -d ':' -f 1)" >> /var/lib/lxc/one-$VM_ID/stop-hook
                 echo "end_line=\$((\$start_line+1))" >> /var/lib/lxc/one-$VM_ID/stop-hook
-                echo "sed \"\$start_line,\$end_line d\" /etc/rc.local > /tmp/rc.local.tmp1 && mv /tmp/rc.local.tmp1 /etc/rc.local" >> /var/lib/lxc/one-$VM_ID/stop-hook
 		echo "sed \"\$start_line,\$end_line d\" /etc/rc.local > /tmp/rc.local.tmp1 && mv /tmp/rc.local.tmp1 /etc/rc.local" >> /var/lib/lxc/one-$VM_ID/stop-hook
                 echo "chmod 755 /etc/rc.local" >> /var/lib/lxc/one-$VM_ID/stop-hook
                 echo "fi" >> /var/lib/lxc/one-$VM_ID/stop-hook;;
@@ -295,7 +294,7 @@ case $VM_DISK_TYPE in
                 let line_number=line_number-1
                 sudo sed -i "$line_number r /tmp/rc.local.opennebula_temp" /etc/rc.local
 		echo "just_reboot=0" > /var/lib/lxc/one-$VM_ID/stop-hook
-                echo "if [ -z \$just_reboot ]; then" >> /var/lib/lxc/one-$VM_ID/stop-hook
+                echo "if [ \"\$just_reboot\" = \"0\" ]; then" >> /var/lib/lxc/one-$VM_ID/stop-hook
                 echo "start_line=\$(grep -in \"lxc-start -d -n one-$VM_ID\" /etc/rc.local | cut -d ':' -f 1)" >> /var/lib/lxc/one-$VM_ID/stop-hook
                 echo "end_line=\$((\$start_line+1))" >> /var/lib/lxc/one-$VM_ID/stop-hook
                 echo "sed \"\$start_line,\$end_line d\" /etc/rc.local > /tmp/rc.local.tmp1 && mv /tmp/rc.local.tmp1 /etc/rc.local" >> /var/lib/lxc/one-$VM_ID/stop-hook

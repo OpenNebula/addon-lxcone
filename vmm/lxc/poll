@@ -3,8 +3,8 @@
 # -------------------------------------------------------------------------- #
 # Copyright 2014-2015, OpenNebula Project (OpenNebula.org), C12G Labs        #
 #                                                                            #
-# Authors: José Manuel de la Fé Herrero   jmdelafe92@gmail.com               #
-#          Sergio Vega Gutiérrez          sergiojvg92@gmail.com              #
+# Authors: Sergio Vega Gutiérrez          sergiojvg92@gmail.com              #
+#          José Manuel de la Fé Herrero   jmdelafe92@gmail.com               #
 #                                                                            #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may    #
 # not use this file except in compliance with the License. You may obtain    #
@@ -18,9 +18,6 @@
 # See the License for the specific language governing permissions and        #
 # limitations under the License.                                             #
 #--------------------------------------------------------------------------- #
-
-#source $(dirname $0)/lxcrc
-source $(dirname $0)/../../scripts_common.sh
 
 echo "VM_POLL=YES"
 
