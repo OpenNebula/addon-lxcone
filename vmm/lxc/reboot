@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # -------------------------------------------------------------------------- #
-# Copyright 2002-2015, OpenNebula Project (OpenNebula.org), C12G Labs        #
-# 									     #
-# Authors: Sergio Vega Gutiérrez          sergiojvg92@gmail.com		     #
-#	   José Manuel de la Fé Herrero   jmdelafe92@gmail.com               #
+# Copyright 2014-2015, OpenNebula Project (OpenNebula.org), C12G Labs        #
+#                                                                            #
+# Authors: Sergio Vega Gutiérrez          sergiojvg92@gmail.com              #
+#          José Manuel de la Fé Herrero   jmdelafe92@gmail.com               #
 #                                                                            #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may    #
 # not use this file except in compliance with the License. You may obtain    #
@@ -19,36 +19,21 @@
 # limitations under the License.                                             #
 #--------------------------------------------------------------------------- #
 
-#source $(dirname $0)/kvmrc
+##source $(dirname $0)/lxcrc
 source $(dirname $0)/../../scripts_common.sh
-
-##############################################################################
-#                     SUSPENDER CONTENEDOR VIRTUAL                           #
-##############################################################################
 
 VM_ID=$3
 
-#echo reboot >> /home/kernel/one/estados
-#while read HDDs; do
-#        if [ ! $HDDs = "disk.0" ]; then
-#                PRE_LOOP=$(sudo losetup -j /var/lib/one/datastores/0/$VM_ID/$lista)
-#                if [ -n "$PRE_LOOP" ]; then
-#                        LOOP_DEV=$(echo $PRE_LOOP | cut -f1 -d":")
-#                        echo loop_dev=$LOOP_DEV >> /home/kernel/one/det
-#                        sudo lxc-attach -e -n one-$VM_ID -- umount -l $LOOP_DEV
-#                        echo lxc-attach -e -n one-$VM_ID -- umount -l $LOOP_DEV >> /home/kernel/one/det
-#                        sudo losetup -d $LOOP_DEV
-#                fi
-#        fi
-#done < <(ls -1 /var/lib/one/datastores/0/${VM_ID})
+##############################################################################
+#                     REINICIAR CONTENEDOR VIRTUAL                           #
+##############################################################################
 
-#while read iface; do
-#sudo lxc-attach -n one-$VM_ID ip link delete $iface
-#done < <(ip a | grep ${VM_ID}-eth | awk '{ print $2 }' | cut -d '-' -f 2 | cut -d ':' -f 1)
-
+sed -i s/"just_reboot=0"/"just_reboot=1"/g /var/lib/lxc/one-${VM_ID}/stop-hook
 
 exec_and_log "sudo lxc-stop -n one-${VM_ID}"
 
 sudo lxc-wait -n one-${VM_ID} -s STOPPED
 
 exec_and_log "sudo lxc-start -d -n one-${VM_ID} -f /var/lib/lxc/one-${VM_ID}/config"
+
+sed -i s/"just_reboot=1"/"just_reboot=0"/g /var/lib/lxc/one-${VM_ID}/stop-hook

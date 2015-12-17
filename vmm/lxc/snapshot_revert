@@ -1,7 +1,10 @@
 #!/bin/bash
 
 # -------------------------------------------------------------------------- #
-# Copyright 2002-2015, OpenNebula Project, OpenNebula Systems                #
+# Copyright 2014-2015, OpenNebula Project (OpenNebula.org), C12G Labs        #
+#                                                                            #
+# Authors: Sergio Vega Gutiérrez          sergiojvg92@gmail.com              #
+#          José Manuel de la Fé Herrero   jmdelafe92@gmail.com               #
 #                                                                            #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may    #
 # not use this file except in compliance with the License. You may obtain    #
@@ -16,14 +19,25 @@
 # limitations under the License.                                             #
 #--------------------------------------------------------------------------- #
 
-source $(dirname $0)/kvmrc
+#source $(dirname $0)/lxcrc
 source $(dirname $0)/../../scripts_common.sh
-
-#DOMAIN="$1"
-#NAME="$2"
 
 NAME="$2"
 VM_ID="$3"
 DOMAIN="one-$VM_ID"
+
+sudo rsync -zqrtLap /var/lib/lxc/${DOMAIN}/snaps/${SNAP_ID}/ --exclude=disks /var/lib/lxc/${DOMAIN}/
+
+while read DISK; do
+	SRCE="/var/lib/lxc/${DOMAIN}/snaps/${SNAP_ID}/disks/$DISK"
+	TRGT=`sudo realpath var/lib/one/datastores/0/${VM_ID}/$DISK`
+	sudo rsync -zqrtLap $SRCE $TRGT
+done < <(ls -1 /var/lib/lxc/${DOMAIN}/snaps/${SNAP_ID}/disks)
+
+sudo lxc-stop -n $DOMAIN
+
+sudo lxc-wait -n $DOMAIN -s STOPPED
+
+sudo lxc-start -n $DOMAIN
 
 exit 0

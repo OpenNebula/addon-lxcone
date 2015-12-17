@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # -------------------------------------------------------------------------- #
-# Copyright 2002-2015, OpenNebula Project (OpenNebula.org), C12G Labs        #
+# Copyright 2014-2015, OpenNebula Project (OpenNebula.org), C12G Labs        #
 # 									     #
 # Authors: Sergio Vega Gutiérrez          sergiojvg92@gmail.com		     #
 #	   José Manuel de la Fé Herrero   jmdelafe92@gmail.com               #
@@ -19,7 +19,7 @@
 # limitations under the License.                                             #
 #--------------------------------------------------------------------------- #
 
-#source $(dirname $0)/kvmrc
+#source $(dirname $0)/lxcrc
 source $(dirname $0)/../../scripts_common.sh
 
 DOMAIN=$1
@@ -29,6 +29,8 @@ MODEL=$4
 NET_DRV=$5
 ID=$6
 
+VAR=$(ssh_exec_and_log 10.8.91.81 ls ERROR)
+echo -e "VAR=$VAR" > /home/kernel/debug/attach_nic_var
 
 iFACE=0
 NIC=$(ip a | grep ${ID}-eth$iFACE)
@@ -45,4 +47,31 @@ sudo ip link add name ${ID}-eth${iFACE} type veth peer name ${ID}-eth${iFACE}-c
 sudo brctl addif $BRIDGE ${ID}-eth${iFACE}
 exec_and_log "sudo ip link set dev ${ID}-eth${iFACE}-c netns $VM_PID name eth${iFACE} address $MAC"
 sudo ip link set ${ID}-eth${iFACE} up
+
+echo "# ETH${iFACE}" > /tmp/config_tmp
+echo "#lxc.utsname = " >> /tmp/config_tmp
+echo "lxc.network.type = veth" >> /tmp/config_tmp
+echo "lxc.network.veth.pair = ${ID}-eth${iFACE}" >> /tmp/config_tmp
+echo "lxc.network.flags = up" >> /tmp/config_tmp
+echo "lxc.network.veth.name = eth${iFACE}" >> /tmp/config_tmp
+echo "lxc.network.veth.link = $BRIDGE" >> /tmp/config_tmp
+echo "lxc.network.veth.hwaddr = $MAC" >> /tmp/config_tmp
+echo "#lxc.network.veth.ipv4 = " >> /tmp/config_tmp
+echo "#lxc.network.veth.ipv4.gateway = " >> /tmp/config_tmp
+line_number=$(grep -in "# Autostart" /var/lib/lxc/one-${ID}/config | cut -d ':' -f 1)
+let line_number=line_number-1
+sed -i "$line_number r /tmp/config_tmp" /var/lib/lxc/one-${ID}/config
+rm /tmp/config_tmp
+
+
+#echo "#--------------------Setting up eth${iFACE}--------------------#" > /var/lib/lxc/one-${ID}/vnc_tmp
+#echo "VM_PID=\$(sudo lxc-info -pHn one-$ID)" >> /var/lib/lxc/one-${ID}/vnc_tmp
+#echo "sudo ip link add name ${ID}-eth${iFACE} type veth peer name ${ID}-eth${iFACE}-c" >> /var/lib/lxc/one-${ID}/vnc_tmp
+#echo "sudo brctl addif $BRIDGE ${ID}-eth${iFACE}" >> /var/lib/lxc/one-${ID}/vnc_tmp
+#echo "sudo ip link set dev ${ID}-eth${iFACE}-c netns \$VM_PID name eth${iFACE} address $MAC" >> /var/lib/lxc/one-${ID}/vnc_tmp
+#echo "ip link set ${ID}-eth${iFACE} up" >> /var/lib/lxc/one-${ID}/vnc_tmp
+#line_number=$(grep -in "## VNC" /var/lib/lxc/one-${ID}/vnc | cut -d ':' -f 1)
+#let line_number=line_number-1
+#sed -i "$line_number r /var/lib/lxc/one-$ID/vnc_tmp" /var/lib/lxc/one-${ID}/vnc
+#rm /var/lib/lxc/one-${ID}/vnc_tmp
 

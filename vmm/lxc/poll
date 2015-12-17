@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # -------------------------------------------------------------------------- #
-# Copyright 2002-2015, OpenNebula Project (OpenNebula.org), C12G Labs        #
+# Copyright 2014-2015, OpenNebula Project (OpenNebula.org), C12G Labs        #
 #                                                                            #
 # Authors: Sergio Vega Gutiérrez          sergiojvg92@gmail.com              #
 #          José Manuel de la Fé Herrero   jmdelafe92@gmail.com               #
@@ -38,7 +38,7 @@ sudo lxc-ls --fancy | grep one- | while read VM; do
 				USEDMEMORY=$(sudo bc <<< ${rMEMORY}*1024)
 
 				if [ -n "$USEDMEMORY" ]; then
-				POLL="$POLL USEDMEMORY=${USEDMEMORY}"
+				POLL="$POLL MEMORY=${USEDMEMORY}"
 				fi
 
 				# CPU
@@ -46,7 +46,7 @@ sudo lxc-ls --fancy | grep one- | while read VM; do
 	       			USEDCPU=$(echo $rCPU | awk '{ print $2 }')
 
 				if [ -n "$USEDCPU" ]; then
-				POLL="$POLL USEDCPU=${USEDCPU}"
+				POLL="$POLL CPU=${USEDCPU}"
 				fi
 
 				if [ "${VM_IP}" != "-" ]; then
@@ -56,9 +56,23 @@ sudo lxc-ls --fancy | grep one- | while read VM; do
 	        			NETTX=${rNETRX/*:}
 	        			NETRX=${rNETTX/*:}
 
-		        		POLL="$POLL NETTX=$NETTX NETRX=$NETTX"
+		        		POLL="$POLL NETTX=$NETTX NETRX=$NETTX}"
 
-		        	fi ;;
+		        	fi
+				# HDDs
+				while read TXT; do
+				        DEV=$(echo $TXT | awk '{ print $1 }' | grep "/dev")
+				        if [ -n "$DEV" ]; then
+				                MOUNT_POINT=$(echo $TXT | awk '{ print $6}')
+			        	        DISK_ID=$(echo $MOUNT_POINT | cut -d '/' -f 3)
+						if [ -z $DISK_ID ]; then
+		        		        	DISK_ID=0
+	        	        		fi
+			        	        rUSEDSIZE=$(echo $TXT | awk '{ print $3 }')
+					        USEDSIZE=$(sudo bc -l <<< ${rUSEDSIZE}/1024)
+			               		POLL="$POLL DISK_SIZE=[ ID=$DISK_ID, SIZE=$USEDSIZE ]"
+				        fi
+				done < <(sudo lxc-attach -n $DEPLOY_ID -- df) ;;
 
 		FROZEN) 	STATE=p ;
 				POLL="STATE=$STATE" ;;
@@ -76,4 +90,3 @@ VM=[
 EOT
 
 done
-

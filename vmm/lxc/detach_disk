@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # -------------------------------------------------------------------------- #
-# Copyright 2002-2015, OpenNebula Project (OpenNebula.org), C12G Labs        #
-# 									     #
-# Authors: Sergio Vega Gutiérrez          sergiojvg92@gmail.com		     #
-#	   José Manuel de la Fé Herrero   jmdelafe92@gmail.com               #
+# Copyright 2014-2015, OpenNebula Project (OpenNebula.org), C12G Labs        #
+#                                                                            #
+# Authors: Sergio Vega Gutiérrez          sergiojvg92@gmail.com              #
+#          José Manuel de la Fé Herrero   jmdelafe92@gmail.com               #
 #                                                                            #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may    #
 # not use this file except in compliance with the License. You may obtain    #
@@ -19,25 +19,33 @@
 # limitations under the License.                                             #
 #--------------------------------------------------------------------------- #
 
-#source $(dirname $0)/kvmrc
+#source $(dirname $0)/lxcrc
 source $(dirname $0)/../../scripts_common.sh
 
-DOMAIN=$1
-SOURCE=$2
-TARGET=$3
-TARGET_INDEXX=$4
-DRV_ACTION=$5
+
+#DOMAIN=$1
+DISK_SOURCE=$2
+#TARGET=$3
+TARGET_INDEX=$4
 VM_ID=$5
 
-TARGET_INDEX=$(echo $SOURCE | cut -d '.' -f 2)
+DISK_ID=`echo $DISK_SOURCE | cut -d  '.' -f 2`
+DEV_SOURCE=`sudo lxc-attach -n one-$VM_ID -- mount | grep "/media/$DISK_ID" | awk '{ print $1 }'`
+DS_TYPE=`echo $DEV_SOURCE | cut -d '/' -f 3`
 
-LVM_LV=$(sudo lvdisplay | grep lv-one-${VM_ID}-$TARGET_INDEX)
+exec_and_log "sudo lxc-attach -e -n one-$VM_ID -- umount $DEV_SOURCE" "*******TARGET IS BUSY. Can't umount :(*******"
+sudo lxc-attach -e -n one-$VM_ID -- rmdir /media/$DISK_ID
 
-if [ -n "$LVM_LV" ]; then
-	sudo lxc-attach -e -n one-$VM_ID -- umount -l /dev/vg-one-0/lv-one-${VM_ID}-$TARGET_INDEX
-else
-	PRE_LOOP=$(sudo losetup -j /var/lib/one/datastores/0/$VM_ID/disk.$TARGET_INDEX)
-	LOOP_DEV=$(echo $PRE_LOOP | cut -f1 -d":")
-	exec_and_log "sudo lxc-attach -e -n one-$VM_ID -- umount -l $LOOP_DEV"
-	sudo losetup -d $LOOP_DEV"
-fi
+case $DS_TYPE in
+	loop*)	sudo losetup -d $DEV_SOURCE
+		start_line=$(grep -in "#--------------------Mounting disk $DISK_ID on one-${VM_ID}--------------------#" /var/lib/lxc/one-$VM_ID/vnc | awk 'NR==1' | cut -d ':' -f 1)
+		end_line=$(($start_line+7))
+		sed "$start_line,$end_line d" /var/lib/lxc/one-$VM_ID/vnc > /var/lib/lxc/one-$VM_ID/vnc_tmp && mv /var/lib/lxc/one-$VM_ID/vnc_tmp /var/lib/lxc/one-$VM_ID/vnc;;
+	rbd*)	sudo rbd unmap $DEV_SOURCE
+		start_line=$(grep -in "#--------------------Mounting disk $DISK_ID on one-${VM_ID}--------------------#" /var/lib/lxc/one-$VM_ID/vnc | awk 'NR==1' | cut -d ':' -f 1)
+		end_line=$(($start_line+8))
+		sed "$start_line,$end_line d" /var/lib/lxc/one-$VM_ID/vnc > /var/lib/lxc/one-$VM_ID/vnc_tmp && mv /var/lib/lxc/one-$VM_ID/vnc_tmp /var/lib/lxc/one-$VM_ID/vnc;;
+	vg-one*) start_line=$(grep -in "#--------------------Mounting disk $DSK_ID on one-${VM_ID}--------------------#" /var/lib/lxc/one-$VM_ID/vnc | awk 'NR==1' | cut -d ':' -f 1)
+		end_line=$(($start_line+3))
+		sed "$start_line,$end_line d" /var/lib/lxc/one-$VM_ID/vnc > /var/lib/lxc/one-$VM_ID/vnc_tmp && mv /var/lib/lxc/one-$VM_ID/vnc_tmp /var/lib/lxc/one-$VM_ID/vnc;;
+esac
