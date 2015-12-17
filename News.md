@@ -32,3 +32,7 @@
 	* Fixed issues with reboot and hard reboot.
 	* Fixed bridge selection in NIC hot-attaching.
 
+###V1.0 (2015-12-17)
+* Failure probe. In case any node is forcibly power off, or in case of an electrical failure, all containers that where running inside affected nodes
+* NIC name matches with OpenNebula NIC ID when deploying.
+* Support for Ceph. 

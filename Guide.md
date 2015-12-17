@@ -103,21 +103,15 @@ $ chmod 600 ~/.ssh/config
 
 Copy the **lxc** folder under **vmm** to the `frontend` on **/var/lib/one/remotes/vmm**. Route to scripts located inside **lxc**, such as **deploy**, should be this one at the end: **/var/lib/one/remotes/vmm/lxc/deploy**.
 
-Copy the **lxc.d** folder under **im** to the `frontend` on **/var/lib/one/remotes/im**. Route to scripts located inside **lxc.d**, such as **mon_lxc.sh**, should be this one at the end: **/var/lib/one/remotes/im/lxc.d/mon_lxc.sh**.
+Copy **lxc.d** and **lxc-probes.d** folders under **im** to the `frontend` on **/var/lib/one/remotes/im**. Route to scripts located inside, such as **mon_lxc.sh** from **lxc.d** folder, should be this one: **/var/lib/one/remotes/im/lxc.d/mon_lxc.sh**.
 
 
 Change user, group and permissions:
 ```
-# chown -R oneadmin:oneadmin /var/lib/one/remotes/vmm/lxc
+# chown -R oneadmin:oneadmin /var/lib/one/remotes/vmm/lxc /var/lib/one/remotes/im/lxc.d /var/lib/one/remotes/im/lxc-probes.d
 ``` 
 ```
-# chmod -R 755 /var/lib/one/remotes/vmm/lxc
-```
-```
-# chown -R oneadmin:oneadmin /var/lib/one/remotes/im/lxc.d
-``` 
-```
-# chmod -R 755 /var/lib/one/remotes/im/lxc.d
+# chmod -R 755 /var/lib/one/remotes/vmm/lxc /var/lib/one/remotes/im/lxc.d /var/lib/one/remotes/im/lxc-probes.d
 ```
 
 ### 1.7. Modify **/etc/one/oned.conf**
@@ -132,7 +126,7 @@ Under **Information Driver Configuration** add this:
 IM_MAD = [
  name = "lxc",
  executable = "one_im_ssh",
- arguments = "-t 20 -r 0 lxc" ]
+ arguments = "-r 3 -t 15 lxc" ]
 #-------------------------------------------------------------------------------
 
 ```
@@ -293,11 +287,11 @@ Every File System image used by LXC through this driver will require one loop de
 
 Write **options loop max_loop=64** to **/etc/modprobe.d/local-loop.conf**
 
-Activate loop module to linux kernel. For this, write **loop** at then end of **/etc/modules**.
+Activate loop module automatically. Write **loop** at then end of **/etc/modules**.
 
 **Reboot** host to enable changes from previous steps.
 
-### 2.8. Configure LVM Datastore [Optional]
+### 2.8. Prepare the node for using LVM Datastores [Optional]
 
 In case an image datastore wants to be created as LVM this steps will be needed.
 
@@ -319,9 +313,32 @@ In case an image datastore wants to be created as LVM this steps will be needed.
 
 #### Creating a volume group
 ```
-# vgcreate /vg-one-SYSTEM_DATASTORE_ID /dev/sdxx
+# vgcreate vg-one-SYSTEM_DATASTORE_ID /dev/sdxx
 ```
 **SYSTEM_DATASTORE_ID** will be 0 if using the default system datastore
+
+
+### 2.9. Prepare the node for using Ceph Datastores [Optional]
+
+#### Install ceph
+```
+# apt-get install ceph
+```
+
+#### Add the node to an existing ceph cluster
+For this, just copy **ceph.conf** and the keyring for the user to /etc/ceph.
+
+#### Change permissions
+
+#### Enable ceph to run commands without specifying a keyring for the user
+Add the following line to **/etc/environment**
+```
+CEPH_ARGS="--keyring /route/to/keyring/file --id user(one by default)"
+```
+
+Activate loop module automatically. Write **rbd** at then end of **/etc/modules**.
+
+Reboot or load rbd module with **modprobe rbd**.
 
 
 ## 3 - Create LXC image
@@ -467,10 +484,27 @@ Select template and click **Create**.
 Select the Virtual Machine and click **Deploy** from the menu.
 
 
+## 4 - FAQs and tips for this addon
+
+#### I attached an image as hard drive. Where is it?
+Every image attached to any container will be automatically mounted inside the container in **/media/$DISK_ID**. Doesn't matter if it was hot-attached or attached in the template and then deployed, it will always be mounted in that folder.
+
+#### It won't detach, what happened?
+For you to be able to detach an image from a running container, this image needs to be mounted in the same place it was originally mounted (**/media/$DISK_ID**  as specified before). Also, it can't be in use for any application in the container or it will purposely fail, you can make sure of this using lsof.
+
+#### I attached a Virtual Nic, wich one is it and is it configured?
+Nic's ID will match with the eth number inside the container. For example, if OpenNebula shows that the NIC you attached has an ID=3, this nic will be eth3 inside the container. NICs will already appear configured if you add them in the template and then deploy that template. If you hot-attached it, it won't be configured but it will appear, for you to be able to manually configure it. This happens because OpenNebula doesn't pass that info when hot attaching a NIC. Now, in case you hot attach a NIC, if you shutdown and then start this container again, it will appear configured, with the configuration specified by OpenNebula.
+
+#### If I configure NICs inside the container using /etc/network/interfaces, will the container use this configuration or the one provided by OpenNebula?
+It will use both. In case the configuration from OpenNebula matches the one inside the interfaces file, this will obviously be the configuration that the NIC will get. If not, the NIC will have two different configurations associated. 
+
+#### Can I also shutdown LXC container's from LXC's CLI or from inside the container?
+Yes, you can. There are some other actions that need to be done, but they will be executed regardless you issued the shutdown from OpenNebula or fron LXC. It might take up to 30 seconds to OpenNebula to change te container's status in case you power off the container from LXC.
+
 
 ### Any issue or question please contact us.
-Sergio Vega Gutierrez sergiojvg92@gmail.com   
-Jose Manuel de la Fe jmdelafe92@gmail.com  
+Sergio Vega Gutiérrez (sergiojvg92@gmail.com)
+José Manuel de la Fé Herrero (jmdelafe92@gmail.com)
 
 
 
