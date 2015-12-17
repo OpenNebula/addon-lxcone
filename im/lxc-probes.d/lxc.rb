@@ -1,7 +1,10 @@
 #!/usr/bin/env ruby
 
 # -------------------------------------------------------------------------- #
-# Copyright 2002-2015, OpenNebula Project, OpenNebula Systems                #
+# Copyright 2014-2015, OpenNebula Project (OpenNebula.org), C12G Labs        #
+#                                                                            #
+# Authors: José Manuel de la Fé Herrero   jmdelafe92@gmail.com               #
+#          Sergio Vega Gutiérrez          sergiojvg92@gmail.com              #
 #                                                                            #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may    #
 # not use this file except in compliance with the License. You may obtain    #
