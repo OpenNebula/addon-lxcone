@@ -56,7 +56,7 @@ sudo lxc-ls --fancy | grep one- | while read VM; do
 	        			NETTX=${rNETRX/*:}
 	        			NETRX=${rNETTX/*:}
 
-		        		POLL="$POLL NETTX=$NETTX NETRX=$NETTX}"
+		        		POLL="$POLL NETTX=$NETTX NETRX=$NETRX"
 
 		        	fi
 				# HDDs
