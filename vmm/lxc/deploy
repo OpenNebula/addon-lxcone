@@ -500,14 +500,14 @@ else
     exit -1
 fi
 
-VM_STATE=$(sudo lxc-ls -f | grep "one-$VM_ID" | awk '{ print $2 }')
+VM_STATE=$(sudo lxc-info -n one-$VM_ID | grep State | awk '{ print $2 }')
 if [ "$VM_STATE" != "RUNNING" ]; then
 	sleep 5
-	VM_STATE=$(sudo lxc-ls -f | grep "one-$VM_ID" | awk '{ print $2 }')
+	VM_STATE=$(sudo lxc-info -n one-$VM_ID | grep State | awk '{ print $2 }')
 	if [ "$VM_STATE" != "RUNNING" ]; then
 		sleep 5
-		VM_STATE=$(sudo lxc-ls -f | grep "one-$VM_ID" | awk '{ print $2 }')
-		if [ "$VM_STATE" != "RUNING" ]; then
+		VM_STATE=$(sudo lxc-info -n one-$VM_ID | grep State | awk '{ print $2 }')
+		if [ "$VM_STATE" != "RUNNING" ]; then
 			exit -1
 		fi
 	fi
