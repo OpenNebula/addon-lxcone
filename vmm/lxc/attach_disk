@@ -31,7 +31,7 @@ VM_ID=$6
 
 CEPH_AUTH=$(grep CEPH_ARGS /etc/environment | cut -d '"' -f 2)
 
-XPATH="/var/lib/one/remotes/datastore/xpath.rb -b $DRV_ACTION"
+XPATH="/var/tmp/one/datastore/xpath.rb -b $DRV_ACTION"
 
 unset i j XPATH_ELEMENTS
 
