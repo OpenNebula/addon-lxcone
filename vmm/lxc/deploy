@@ -35,7 +35,7 @@ fi
 #                            	XPATH                                        #
 ##############################################################################
 
-XPATH="/var/lib/one/remotes/datastore/xpath.rb --stdin"
+XPATH="/var/tmp/one/datastore/xpath.rb --stdin"
 
 unset i j XPATH_ELEMENTS
 
