@@ -277,7 +277,7 @@ case $VM_DISK_TYPE in
 	FILE) 	rootfs=loop:/var/lib/one/datastores/$SYSTEM_DATASTORE_ID/$VM_ID/disk.0
 		sudo echo "lxc-start -d -n one-$VM_ID" > /tmp/rc.local.opennebula_temp
 		sudo echo "#--------------------------------------------" >> /tmp/rc.local.opennebula_temp
-		line_number=$(grep -in "exit 0" /etc/rc.local | awk 'NR==2' | cut -d ':' -f 1)
+		line_number=$(grep -in "exit 0" /etc/rc.local | awk 'NR==1' | cut -d ':' -f 1)
                 let line_number=line_number-1
                 sudo sed -i "$line_number r /tmp/rc.local.opennebula_temp" /etc/rc.local
 		echo "just_reboot=0" > /var/lib/lxc/one-$VM_ID/stop-hook
@@ -290,7 +290,7 @@ case $VM_DISK_TYPE in
 	BLOCK) 	rootfs=/dev/vg-one-0/lv-one-${VM_ID}-0
 		sudo echo "lxc-start -d -n one-$VM_ID" > /tmp/rc.local.opennebula_temp
 		sudo echo "#--------------------------------------------" >> /tmp/rc.local.opennebula_temp
-		line_number=$(grep -in "exit 0" /etc/rc.local | awk 'NR==2' | cut -d ':' -f 1)
+		line_number=$(grep -in "exit 0" /etc/rc.local | awk 'NR==1' | cut -d ':' -f 1)
                 let line_number=line_number-1
                 sudo sed -i "$line_number r /tmp/rc.local.opennebula_temp" /etc/rc.local
 		echo "just_reboot=0" > /var/lib/lxc/one-$VM_ID/stop-hook
@@ -316,7 +316,7 @@ case $VM_DISK_TYPE in
 		echo "sed -i \"\$line i \$rootfs\" /var/lib/lxc/one-$VM_ID/config" >> /tmp/rc.local.opennebula_temp
 		echo "lxc-start -d -n one-$VM_ID" >> /tmp/rc.local.opennebula_temp
 		sudo echo "#--------------------------------------------" >> /tmp/rc.local.opennebula_temp
-                line_number=$(grep -in "exit 0" /etc/rc.local | awk 'NR==2' | cut -d ':' -f 1)
+                line_number=$(grep -in "exit 0" /etc/rc.local | awk 'NR==1' | cut -d ':' -f 1)
 		let line_number=line_number-1
                 sudo sed -i "$line_number r /tmp/rc.local.opennebula_temp" /etc/rc.local
 		echo "just_reboot=0" > /var/lib/lxc/one-$VM_ID/stop-hook
