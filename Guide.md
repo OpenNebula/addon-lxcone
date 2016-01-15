@@ -190,7 +190,7 @@ deb http://downloads.opennebula.org/repo/4.14/Ubuntu/14.04/ stable opennebula
 
 Download **VNCterm** binary package from the **GitHub** repository and install it using **dpkg** or other package manager.
 
-### 2.3. Configure the network
+### 2.3. Network configuration
 
 Turn down your network interface
 ```
