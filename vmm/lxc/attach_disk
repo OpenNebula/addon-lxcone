@@ -121,8 +121,8 @@ case $TYPE in
 		S_HOOK=$(sed "/sudo rm -rf/i sudo rbd unmap ${RBD_DEV}" /var/lib/lxc/one-$VM_ID/stop-hook)
                 echo -e "$S_HOOK" > /var/lib/lxc/one-$VM_ID/stop-hook;;
 	BLOCK)  if [ "${TM_MAD}" = "lvm" ]; then
-			LV_SOURCE=$(echo $IMG_SOURCE ! cut -d ':' -f 2 | cut -d '.' -f 2)
-                        VG_SOURCE=$(echo $IMG_SOURCE | cut -d ':' -f 2 | cut -d '.' -f 1)
+			LV_SOURCE=$(echo $IMG_SRC | cut -d ':' -f 2 | cut -d '.' -f 2)
+                        VG_SOURCE=$(echo $IMG_SRC | cut -d ':' -f 2 | cut -d '.' -f 1)
                         MOUNT_BLOCK=/dev/${VG_SOURCE}/${LV_SOURCE}
                 else
                         MOUNT_BLOCK=/dev/vg-one-0/lv-one-${VM_ID}-${DISK_ID}
