@@ -287,7 +287,13 @@ case $VM_DISK_TYPE in
 		echo "sed \"\$start_line,\$end_line d\" /etc/rc.local > /tmp/rc.local.tmp1 && mv /tmp/rc.local.tmp1 /etc/rc.local" >> /var/lib/lxc/one-$VM_ID/stop-hook
                 echo "chmod 755 /etc/rc.local" >> /var/lib/lxc/one-$VM_ID/stop-hook
                 echo "fi" >> /var/lib/lxc/one-$VM_ID/stop-hook;;
-	BLOCK) 	rootfs=/dev/vg-one-0/lv-one-${VM_ID}-0
+	BLOCK)	if [ "${VM_DISK_TM_MAD}" = "lvm" ]; then
+			LV_SOURCE=$(echo $VM_DISK_SOURCE ! cut -d ':' -f 2 | cut -d '.' -f 2)
+			VG_SOURCE=$(echo $VM_DISK_SOURCE | cut -d ':' -f 2 | cut -d '.' -f 1)
+			rootfs=/dev/${VG_SOURCE}/${LV_SOURCE}
+                else
+                        rootfs=/dev/vg-one-0/lv-one-${VM_ID}-0
+                fi
 		sudo echo "lxc-start -d -n one-$VM_ID" > /tmp/rc.local.opennebula_temp
 		sudo echo "#--------------------------------------------" >> /tmp/rc.local.opennebula_temp
 		line_number=$(grep -in "exit 0" /etc/rc.local | tail -1 | cut -d ':' -f 1)
@@ -428,7 +434,9 @@ while read CLONE; do
         DISK_CLONE[l++]="$CLONE"
 done < <(xmlstarlet sel -t -v "/VM/TEMPLATE/DISK/CLONE" -n /var/lib/one/vms/${VM_ID}/deployment.$DEPLOY_NUM)
 
-
+while read TM_MAD; do
+        DISK_TM_MAD[f++]="$TM_MAD"
+done < <(xmlstarlet sel -t -v "/VM/TEMPLATE/DISK/TM_MAD" -n /var/lib/one/vms/${VM_ID}/deployment.$DEPLOY_NUM)
 
 
 XML_ELEMENT=0
@@ -462,10 +470,17 @@ let XML_ELEMENT=XML_ELEMENT+1
 			echo "lxc-attach -n one-$VM_ID -- mount \$RBD_DEV /media/$DSK_ID" >> /var/lib/lxc/one-$VM_ID/vnc
 			echo "RBD_DEV=\$(rbd showmapped | grep -m 1 $IMAGE_NAME | awk '{print \$5}')" >> /var/lib/lxc/one-$VM_ID/stop-hook
 			echo "sudo rbd unmap \$RBD_DEV" >> /var/lib/lxc/one-$VM_ID/stop-hook;;
-		BLOCK)  echo "#--------------------Mounting disk $DSK_ID on one-${VM_ID}--------------------#" >> /var/lib/lxc/one-$VM_ID/vnc
-			echo "lxc-device -n one-$VM_ID add /dev/vg-one-0/lv-one-${VM_ID}-${DSK_ID}" >> /var/lib/lxc/one-$VM_ID/vnc;
+		BLOCK)  if [ "${DISK_TM_MAD[${XML_ELEMENT}]}" = "lvm" ]; then
+				LV_SOURCE=$(echo "${DISK_SOURCE[${XML_ELEMENT}]}" | cut -d ':' -f 2 | cut -d '.' -f 2)
+                        	VG_SOURCE=$(echo "${DISK_SOURCE[${XML_ELEMENT}]}" | cut -d ':' -f 2 | cut -d '.' -f 1)
+				MOUNT_BLOCK="/dev/${VG_SOURCE}/${LV_SOURCE}"
+	                else
+				MOUNT_BLOCK="/dev/vg-one-0/lv-one-${VM_ID}-${DSK_ID}"
+			fi
+			echo "#--------------------Mounting disk $DSK_ID on one-${VM_ID}--------------------#" >> /var/lib/lxc/one-$VM_ID/vnc
+			echo "lxc-device -n one-$VM_ID add ${MOUNT_BLOCK}" >> /var/lib/lxc/one-$VM_ID/vnc;
 			echo "lxc-attach -n one-$VM_ID -- mkdir -p /media/$DSK_ID" >> /var/lib/lxc/one-$VM_ID/vnc
-			echo "lxc-attach -n one-$VM_ID -- mount /dev/vg-one-0/lv-one-${VM_ID}-${DSK_ID} /media/${DSK_ID}" >> /var/lib/lxc/one-$VM_ID/vnc;;
+			echo "lxc-attach -n one-$VM_ID -- mount ${MOUNT_BLOCK} /media/${DSK_ID}" >> /var/lib/lxc/one-$VM_ID/vnc;;
 	esac
 fi
 done < <(xmlstarlet sel -t -v "/VM/TEMPLATE/DISK/DISK_ID" -n /var/lib/one/vms/${VM_ID}/deployment.$DEPLOY_NUM)

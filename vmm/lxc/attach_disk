@@ -50,7 +50,9 @@ done < <($XPATH     /VMM_DRIVER_ACTION_DATA/VM/ID \
                     $DISK_XPATH/CLONE \
                     $DISK_XPATH/CEPH_HOST \
                     $DISK_XPATH/CEPH_SECRET \
-                    $DISK_XPATH/CEPH_USER)
+                    $DISK_XPATH/CEPH_USER \
+		    $DISK_XPATH/TM_MAD \
+		    $DISK_XPATH/TM)
 
 VMID="${XPATH_ELEMENTS[j++]}"
 DRIVER="${XPATH_ELEMENTS[j++]:-$DEFAULT_TYPE}"
@@ -64,7 +66,7 @@ CLONE="${XPATH_ELEMENTS[j++]}"
 CEPH_HOST="${XPATH_ELEMENTS[j++]}"
 CEPH_SECRET="${XPATH_ELEMENTS[j++]}"
 CEPH_USER="${XPATH_ELEMENTS[j++]}"
-
+TM_MAD="${XPATH_ELEMENTS[j++]}"
 
 TARGET_INDEX=`echo $SOURCE | cut -d '.' -f 2`
 sudo lxc-attach -n one-$VM_ID -- mkdir -p /media/$TARGET_INDEX
@@ -118,12 +120,19 @@ case $TYPE in
 		rm /var/lib/lxc/one-$VM_ID/vnc_tmp
 		S_HOOK=$(sed "/sudo rm -rf/i sudo rbd unmap ${RBD_DEV}" /var/lib/lxc/one-$VM_ID/stop-hook)
                 echo -e "$S_HOOK" > /var/lib/lxc/one-$VM_ID/stop-hook;;
-	BLOCK) sudo lxc-device -n one-$VM_ID add /dev/vg-one-0/lv-one-${VM_ID}-${DISK_ID}
-                exec_and_log "sudo lxc-attach -n one-$VM_ID -- mount /dev/vg-one-0/lv-one-${VM_ID}-${DISK_ID} /media/${DISK_ID}"
+	BLOCK)  if [ "${TM_MAD}" = "lvm" ]; then
+			LV_SOURCE=$(echo $IMG_SOURCE ! cut -d ':' -f 2 | cut -d '.' -f 2)
+                        VG_SOURCE=$(echo $IMG_SOURCE | cut -d ':' -f 2 | cut -d '.' -f 1)
+                        MOUNT_BLOCK=/dev/${VG_SOURCE}/${LV_SOURCE}
+                else
+                        MOUNT_BLOCK=/dev/vg-one-0/lv-one-${VM_ID}-${DISK_ID}
+                fi
+		sudo lxc-device -n one-$VM_ID add ${MOUNT_BLOCK}
+                exec_and_log "sudo lxc-attach -n one-$VM_ID -- mount ${MOUNT_BLOCK} /media/${DISK_ID}"
 		echo "#--------------------Mounting disk $TARGET_INDEX on one-${VM_ID}--------------------#" > /var/lib/lxc/one-$VM_ID/vnc_tmp
-		echo "lxc-device -n one-$VM_ID add /dev/vg-one-0/lv-one-${VM_ID}-${DISK_ID}" >> /var/lib/lxc/one-$VM_ID/vnc_tmp
+		echo "lxc-device -n one-$VM_ID add ${MOUNT_BLOCK}" >> /var/lib/lxc/one-$VM_ID/vnc_tmp
 		echo "lxc-attach -n one-$VM_ID -- mkdir -p /media/$TARGET_INDEX" >> /var/lib/lxc/one-$VM_ID/vnc_tmp
-                echo "lxc-attach -n one-$VM_ID -- mount /dev/vg-one-0/lv-one-${VM_ID}-${DISK_ID} /media/${TARGET_INDEX}" >> /var/lib/lxc/one-$VM_ID/vnc_tmp
+                echo "lxc-attach -n one-$VM_ID -- mount ${MOUNT_BLOCK} /media/${TARGET_INDEX}" >> /var/lib/lxc/one-$VM_ID/vnc_tmp
 		line_number=$(grep -in "## VNC" /var/lib/lxc/one-$VM_ID/vnc | cut -d ':' -f 1)
 		let line_number=line_number-1
 		sed -i "$line_number r /var/lib/lxc/one-$VM_ID/vnc_tmp" /var/lib/lxc/one-$VM_ID/vnc
