@@ -97,7 +97,7 @@ fi
 #                            	NETWORK                                      #
 ##############################################################################
 
-TOTAL_iFACE=$(xmlstarlet sel -t -v "count(/VM/TEMPLATE/NIC/IP)" /var/lib/one/vms/${VM_ID}/deployment.$DEPLOY_NUM)
+TOTAL_iFACE=$(xmlstarlet sel -t -v "count(/VM/TEMPLATE/NIC/NETWORK_ID)" /var/lib/one/vms/${VM_ID}/deployment.$DEPLOY_NUM)
 
 NIC_ID_LIST=$(xmlstarlet sel -t -v "/VM/TEMPLATE/NIC/NIC_ID" /var/lib/one/vms/${VM_ID}/deployment.$DEPLOY_NUM)
 
@@ -231,6 +231,11 @@ done
 cnt_iface=0
 
 while [ $cnt_iface -lt $iFACE ];do
+if [ -n "${IP_ETH[$cnt_iface]}" ]; then
+	CONFIG_IP_ETH="lxc.network.ipv4 = ${IP_ETH[$cnt_iface]}/${CIDR_MASK_ETH[$cnt_iface]}"
+else
+	CONFIG_IP_ETH="#lxc.network.ipv4 = No IP :("
+fi
 NET_CONFIG="$NET_CONFIG $(cat << EOF
 
 # ETH${cnt_iface}
@@ -241,7 +246,7 @@ lxc.network.flags = up
 lxc.network.name = eth${NIC_ID[$cnt_iface]}
 lxc.network.link = ${BR_ETH[$cnt_iface]}
 lxc.network.hwaddr = ${MAC_ETH[$cnt_iface]}
-lxc.network.ipv4 = ${IP_ETH[$cnt_iface]}/${CIDR_MASK_ETH[$cnt_iface]}
+${CONFIG_IP_ETH}
 ${CONFIG_GW_ETH[$cnt_iface]}
 EOF
 )"
