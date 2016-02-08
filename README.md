@@ -50,7 +50,7 @@ https://github.com/OpenNebula/addon-lxcone/blob/master/Guide.md
 
 ## License
 
-José Manuel de la Fé Herrero - jmdelafe@gmail.com
+José Manuel de la Fé Herrero - jmdelafe92@gmail.com
 
 Sergio Vega Gutiérrez - sergiojvg92@gmail.com
 
