@@ -92,8 +92,8 @@ case $TYPE in
 		let line_number=line_number-1
 		sed -i "$line_number r /var/lib/lxc/one-$VM_ID/vnc_tmp" /var/lib/lxc/one-$VM_ID/vnc
 		rm /var/lib/lxc/one-$VM_ID/vnc_tmp
-		S_HOOK=$(sed "/sudo rm -rf/i sudo losetup -d $LOOP" /var/lib/lxc/one-$VM_ID/stop-hook)
-		echo -e "$S_HOOK" > /var/lib/lxc/one-$VM_ID/stop-hook;;
+		S_HOOK=$(sed "/sudo rm -rf/i sudo losetup -d $LOOP" /var/lib/lxc/one-$VM_ID/clean)
+		echo -e "$S_HOOK" > /var/lib/lxc/one-$VM_ID/clean;;
 	RBD) 	if [ "${CLONE}" = "YES" ]; then
                 	IMG_SRC="${IMG_SRC}-${VM_ID}-${DISK_ID}"
 		fi
@@ -118,8 +118,8 @@ case $TYPE in
 		let line_number=line_number-1
 		sed -i "$line_number r /var/lib/lxc/one-$VM_ID/vnc_tmp" /var/lib/lxc/one-$VM_ID/vnc
 		rm /var/lib/lxc/one-$VM_ID/vnc_tmp
-		S_HOOK=$(sed "/sudo rm -rf/i sudo rbd unmap ${RBD_DEV}" /var/lib/lxc/one-$VM_ID/stop-hook)
-                echo -e "$S_HOOK" > /var/lib/lxc/one-$VM_ID/stop-hook;;
+		S_HOOK=$(sed "/sudo rm -rf/i sudo rbd unmap ${RBD_DEV}" /var/lib/lxc/one-$VM_ID/clean)
+                echo -e "$S_HOOK" > /var/lib/lxc/one-$VM_ID/clean;;
 	BLOCK)  if [ "${TM_MAD}" = "lvm" ]; then
 			LV_SOURCE=$(echo $IMG_SRC | cut -d ':' -f 2 | cut -d '.' -f 2)
                         VG_SOURCE=$(echo $IMG_SRC | cut -d ':' -f 2 | cut -d '.' -f 1)

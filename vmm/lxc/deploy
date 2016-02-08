@@ -275,25 +275,27 @@ done < <(echo -e "$XML_PARSE")
 #	let DISK=DISK+1
 #done
 
-
 ############################################################################
 #			rootfs						  #
 ###########################################################################
 
 case $VM_DISK_TYPE in
 	FILE) 	rootfs=loop:/var/lib/one/datastores/$SYSTEM_DATASTORE_ID/$VM_ID/disk.0
-		sudo echo "lxc-start -d -n one-$VM_ID" > /tmp/rc.local.opennebula_temp
-		sudo echo "#--------------------------------------------" >> /tmp/rc.local.opennebula_temp
-		line_number=$(grep -in "exit 0" /etc/rc.local | tail -1 | cut -d ':' -f 1)
-                let line_number=line_number-1
-                sudo sed -i "$line_number r /tmp/rc.local.opennebula_temp" /etc/rc.local
-		echo "just_reboot=0" > /var/lib/lxc/one-$VM_ID/stop-hook
-                echo "if [ \"\$just_reboot\" = \"0\" ]; then" >> /var/lib/lxc/one-$VM_ID/stop-hook
-                echo "start_line=\$(grep -in \"lxc-start -d -n one-$VM_ID\" /etc/rc.local | cut -d ':' -f 1)" >> /var/lib/lxc/one-$VM_ID/stop-hook
-                echo "end_line=\$((\$start_line+1))" >> /var/lib/lxc/one-$VM_ID/stop-hook
-		echo "sed \"\$start_line,\$end_line d\" /etc/rc.local > /tmp/rc.local.tmp1 && mv /tmp/rc.local.tmp1 /etc/rc.local" >> /var/lib/lxc/one-$VM_ID/stop-hook
-                echo "chmod 755 /etc/rc.local" >> /var/lib/lxc/one-$VM_ID/stop-hook
-                echo "fi" >> /var/lib/lxc/one-$VM_ID/stop-hook;;
+		RC_LOCAL=$(sudo grep "lxc-start -d -n one-$VM_ID" /etc/rc.local)
+		if [ -z "$RC_LOCAL" ]; then
+			sudo echo "lxc-start -d -n one-$VM_ID" > /tmp/rc.local.opennebula_temp
+			sudo echo "#--------------------------------------------" >> /tmp/rc.local.opennebula_temp
+			line_number=$(grep -in "exit 0" /etc/rc.local | tail -1 | cut -d ':' -f 1)
+                	let line_number=line_number-1
+                	sudo sed -i "$line_number r /tmp/rc.local.opennebula_temp" /etc/rc.local
+		fi
+		echo "VM_STATE=\$(sudo lxc-info -n one-$VM_ID | grep State | awk '{ print \$2 }')" > /var/lib/lxc/one-$VM_ID/clean
+                echo "if [ \"\$VM_STATE\" = \"STOPPED\" ]; then" >> /var/lib/lxc/one-$VM_ID/clean
+                echo "start_line=\$(grep -in \"lxc-start -d -n one-$VM_ID\" /etc/rc.local | cut -d ':' -f 1)" >> /var/lib/lxc/one-$VM_ID/clean
+                echo "end_line=\$((\$start_line+1))" >> /var/lib/lxc/one-$VM_ID/clean
+		echo "sed \"\$start_line,\$end_line d\" /etc/rc.local > /tmp/rc.local.tmp1 && mv /tmp/rc.local.tmp1 /etc/rc.local" >> /var/lib/lxc/one-$VM_ID/clean
+                echo "chmod 755 /etc/rc.local" >> /var/lib/lxc/one-$VM_ID/clean
+                echo "fi" >> /var/lib/lxc/one-$VM_ID/clean;;
 	BLOCK)	if [ "${VM_DISK_TM_MAD}" = "lvm" ]; then
 			LV_SOURCE=$(echo -e "$VM_DISK_SOURCE" | cut -d ':' -f 2 | cut -d '.' -f 2)
 			VG_SOURCE=$(echo -e "$VM_DISK_SOURCE" | cut -d ':' -f 2 | cut -d '.' -f 1)
@@ -301,18 +303,21 @@ case $VM_DISK_TYPE in
                 else
                         rootfs=/dev/vg-one-0/lv-one-${VM_ID}-0
                 fi
-		sudo echo "lxc-start -d -n one-$VM_ID" > /tmp/rc.local.opennebula_temp
-		sudo echo "#--------------------------------------------" >> /tmp/rc.local.opennebula_temp
-		line_number=$(grep -in "exit 0" /etc/rc.local | tail -1 | cut -d ':' -f 1)
-                let line_number=line_number-1
-                sudo sed -i "$line_number r /tmp/rc.local.opennebula_temp" /etc/rc.local
-		echo "just_reboot=0" > /var/lib/lxc/one-$VM_ID/stop-hook
-                echo "if [ \"\$just_reboot\" = \"0\" ]; then" >> /var/lib/lxc/one-$VM_ID/stop-hook
-                echo "start_line=\$(grep -in \"lxc-start -d -n one-$VM_ID\" /etc/rc.local | cut -d ':' -f 1)" >> /var/lib/lxc/one-$VM_ID/stop-hook
-                echo "end_line=\$((\$start_line+1))" >> /var/lib/lxc/one-$VM_ID/stop-hook
-                echo "sed \"\$start_line,\$end_line d\" /etc/rc.local > /tmp/rc.local.tmp1 && mv /tmp/rc.local.tmp1 /etc/rc.local" >> /var/lib/lxc/one-$VM_ID/stop-hook
-                echo "chmod 755 /etc/rc.local" >> /var/lib/lxc/one-$VM_ID/stop-hook
-                echo "fi" >> /var/lib/lxc/one-$VM_ID/stop-hook;;
+		RC_LOCAL=$(sudo grep "lxc-start -d -n one-$VM_ID" /etc/rc.local)
+                if [ -z "$RC_LOCAL" ]; then
+                	sudo echo "lxc-start -d -n one-$VM_ID" > /tmp/rc.local.opennebula_temp
+	                sudo echo "#--------------------------------------------" >> /tmp/rc.local.opennebula_temp
+        	        line_number=$(grep -in "exit 0" /etc/rc.local | tail -1 | cut -d ':' -f 1)
+               		let line_number=line_number-1
+                	sudo sed -i "$line_number r /tmp/rc.local.opennebula_temp" /etc/rc.local
+		fi
+		echo "VM_STATE=\$(sudo lxc-info -n one-$VM_ID | grep State | awk '{ print \$2 }')" > /var/lib/lxc/one-$VM_ID/clean
+                echo "if [ \"\$VM_STATE\" = \"STOPPED\" ]; then" >> /var/lib/lxc/one-$VM_ID/clean
+                echo "start_line=\$(grep -in \"lxc-start -d -n one-$VM_ID\" /etc/rc.local | cut -d ':' -f 1)" >> /var/lib/lxc/one-$VM_ID/clean
+                echo "end_line=\$((\$start_line+1))" >> /var/lib/lxc/one-$VM_ID/clean
+                echo "sed \"\$start_line,\$end_line d\" /etc/rc.local > /tmp/rc.local.tmp1 && mv /tmp/rc.local.tmp1 /etc/rc.local" >> /var/lib/lxc/one-$VM_ID/clean
+                echo "chmod 755 /etc/rc.local" >> /var/lib/lxc/one-$VM_ID/clean
+                echo "fi" >> /var/lib/lxc/one-$VM_ID/clean;;
 	RBD) if [ "${VM_DISK_CLONE}" = "YES" ]; then
  			VM_DISK_SOURCE="${VM_DISK_SOURCE}-${VM_ID}-0"
 			fi
@@ -321,25 +326,28 @@ case $VM_DISK_TYPE in
 			sudo -E rbd map $VM_DISK_SOURCE;
                         rootfs=$(rbd showmapped | grep one-$IMAGE_ID | awk 'NR==1' | awk '{ print $5 }')
                 fi
-		echo "rbd map $CEPH_AUTH $VM_DISK_SOURCE" > /tmp/rc.local.opennebula_temp
-		echo "rootfs=\$(rbd showmapped | grep one-$IMAGE_ID | awk 'NR==1' | awk '{ print \$5 }')" >> /tmp/rc.local.opennebula_temp
-		echo "rootfs=\"lxc.rootfs = \$rootfs\"" >> /tmp/rc.local.opennebula_temp
-		echo "line=\$(grep -in rootfs /var/lib/lxc/one-$VM_ID/config | cut -d ':' -f 1)" >> /tmp/rc.local.opennebula_temp
-		echo "sed \"\$line d\" /var/lib/lxc/one-$VM_ID/config > /tmp/one-$VM_ID-config-tmp && mv /tmp/one-$VM_ID-config-tmp /var/lib/lxc/one-$VM_ID/config" >> /tmp/rc.local.opennebula_temp
-		echo "sed -i \"\$line i \$rootfs\" /var/lib/lxc/one-$VM_ID/config" >> /tmp/rc.local.opennebula_temp
-		echo "lxc-start -d -n one-$VM_ID" >> /tmp/rc.local.opennebula_temp
-		sudo echo "#--------------------------------------------" >> /tmp/rc.local.opennebula_temp
-                line_number=$(grep -in "exit 0" /etc/rc.local | tail -1 | cut -d ':' -f 1)
-		let line_number=line_number-1
-                sudo sed -i "$line_number r /tmp/rc.local.opennebula_temp" /etc/rc.local
-		echo "just_reboot=0" > /var/lib/lxc/one-$VM_ID/stop-hook
-		echo "if [ \"\$just_reboot\" = \"0\" ]; then" >> /var/lib/lxc/one-$VM_ID/stop-hook
-		echo "sudo rbd unmap ${rootfs}" >> /var/lib/lxc/one-$VM_ID/stop-hook
-		echo "start_line=\$(grep -in \"rbd map $CEPH_AUTH $VM_DISK_SOURCE\" /etc/rc.local | cut -d ':' -f 1)" >> /var/lib/lxc/one-$VM_ID/stop-hook
-                echo "end_line=\$((\$start_line+7))" >> /var/lib/lxc/one-$VM_ID/stop-hook
-                echo "sed \"\$start_line,\$end_line d\" /etc/rc.local > /tmp/rc.local.tmp1 && mv /tmp/rc.local.tmp1 /etc/rc.local" >> /var/lib/lxc/one-$VM_ID/stop-hook
-		echo "chmod 755 /etc/rc.local" >> /var/lib/lxc/one-$VM_ID/stop-hook
-		echo "fi" >> /var/lib/lxc/one-$VM_ID/stop-hook;;
+		RC_LOCAL=$(sudo grep "lxc-start -d -n one-$VM_ID" /etc/rc.local)
+                if [ -z "$RC_LOCAL" ]; then
+			echo "rbd map $CEPH_AUTH $VM_DISK_SOURCE" > /tmp/rc.local.opennebula_temp
+			echo "rootfs=\$(rbd showmapped | grep one-$IMAGE_ID | awk 'NR==1' | awk '{ print \$5 }')" >> /tmp/rc.local.opennebula_temp
+			echo "rootfs=\"lxc.rootfs = \$rootfs\"" >> /tmp/rc.local.opennebula_temp
+			echo "line=\$(grep -in rootfs /var/lib/lxc/one-$VM_ID/config | cut -d ':' -f 1)" >> /tmp/rc.local.opennebula_temp
+			echo "sed \"\$line d\" /var/lib/lxc/one-$VM_ID/config > /tmp/one-$VM_ID-config-tmp && mv /tmp/one-$VM_ID-config-tmp /var/lib/lxc/one-$VM_ID/config" >> /tmp/rc.local.opennebula_temp
+			echo "sed -i \"\$line i \$rootfs\" /var/lib/lxc/one-$VM_ID/config" >> /tmp/rc.local.opennebula_temp
+			echo "lxc-start -d -n one-$VM_ID" >> /tmp/rc.local.opennebula_temp
+			sudo echo "#--------------------------------------------" >> /tmp/rc.local.opennebula_temp
+                	line_number=$(grep -in "exit 0" /etc/rc.local | tail -1 | cut -d ':' -f 1)
+			let line_number=line_number-1
+                	sudo sed -i "$line_number r /tmp/rc.local.opennebula_temp" /etc/rc.local
+		fi
+		echo "VM_STATE=\$(sudo lxc-info -n one-$VM_ID | grep State | awk '{ print \$2 }')" > /var/lib/lxc/one-$VM_ID/clean
+                echo "if [ \"\$VM_STATE\" = \"STOPPED\" ]; then" >> /var/lib/lxc/one-$VM_ID/clean
+		echo "sudo rbd unmap ${rootfs}" >> /var/lib/lxc/one-$VM_ID/clean
+		echo "start_line=\$(grep -in \"rbd map $CEPH_AUTH $VM_DISK_SOURCE\" /etc/rc.local | cut -d ':' -f 1)" >> /var/lib/lxc/one-$VM_ID/clean
+                echo "end_line=\$((\$start_line+7))" >> /var/lib/lxc/one-$VM_ID/clean
+                echo "sed \"\$start_line,\$end_line d\" /etc/rc.local > /tmp/rc.local.tmp1 && mv /tmp/rc.local.tmp1 /etc/rc.local" >> /var/lib/lxc/one-$VM_ID/clean
+		echo "chmod 755 /etc/rc.local" >> /var/lib/lxc/one-$VM_ID/clean
+		echo "fi" >> /var/lib/lxc/one-$VM_ID/clean;;
 
 esac
 
@@ -353,10 +361,11 @@ cat > /var/lib/lxc/one-$VM_ID/start-hook <<EOF
 at now -f /var/lib/lxc/one-$VM_ID/vnc
 EOF
 
-#cat > /var/lib/lxc/one-$VM_ID/stop-hook <<EOF
+cat > /var/lib/lxc/one-$VM_ID/stop-hook <<EOF
 #!/bin/bash
 #sed -i s/"lxc.start.auto = 1"/"lxc.start.auto = 0"/g /var/lib/lxc/one-$VM_ID/config
-#EOF
+at now -f /var/lib/lxc/one-$VM_ID/clean
+EOF
 
 
 #######
@@ -377,6 +386,7 @@ EOF
 sudo chmod 755 /var/lib/lxc/one-$VM_ID/start-hook
 sudo chmod 755 /var/lib/lxc/one-$VM_ID/stop-hook
 sudo chmod 755 /var/lib/lxc/one-$VM_ID/vnc
+sudo chmod 755 /var/lib/lxc/one-$VM_ID/clean
 
 ##############################################################################
 #                      GENERATING CONFIG FILE	                             #
@@ -461,7 +471,7 @@ let XML_ELEMENT=XML_ELEMENT+1
 			echo "lxc-device -n one-$VM_ID add $loop" >> /var/lib/lxc/one-$VM_ID/vnc
 			echo "lxc-attach -n one-$VM_ID -- mkdir -p /media/$DSK_ID" >> /var/lib/lxc/one-$VM_ID/vnc
 			echo "lxc-attach -n one-$VM_ID -- mount $loop /media/$DSK_ID" >> /var/lib/lxc/one-$VM_ID/vnc
-			echo "sudo losetup -d ${loop}" >> /var/lib/lxc/one-$VM_ID/stop-hook;;
+			echo "sudo losetup -d ${loop}" >> /var/lib/lxc/one-$VM_ID/clean;;
         	RBD) 	if [ "${DISK_CLONE[${XML_ELEMENT}]}" = "YES" ]; then
                         	DISK_SOURCE[${XML_ELEMENT}]="${DISK_SOURCE[${XML_ELEMENT}]}-${VM_ID}-${DSK_ID}"
                         fi
@@ -475,8 +485,8 @@ let XML_ELEMENT=XML_ELEMENT+1
 			echo "lxc-device -n one-$VM_ID add \$RBD_DEV" >> /var/lib/lxc/one-$VM_ID/vnc
 			echo "lxc-attach -n one-$VM_ID -- mkdir -p /media/$DSK_ID" >> /var/lib/lxc/one-$VM_ID/vnc
 			echo "lxc-attach -n one-$VM_ID -- mount \$RBD_DEV /media/$DSK_ID" >> /var/lib/lxc/one-$VM_ID/vnc
-			echo "RBD_DEV=\$(rbd showmapped | grep -m 1 $IMAGE_NAME | awk '{print \$5}')" >> /var/lib/lxc/one-$VM_ID/stop-hook
-			echo "sudo rbd unmap \$RBD_DEV" >> /var/lib/lxc/one-$VM_ID/stop-hook;;
+			echo "RBD_DEV=\$(rbd showmapped | grep -m 1 $IMAGE_NAME | awk '{print \$5}')" >> /var/lib/lxc/one-$VM_ID/clean
+			echo "sudo rbd unmap \$RBD_DEV" >> /var/lib/lxc/one-$VM_ID/clean;;
 		BLOCK)  if [ "${DISK_TM_MAD[${XML_ELEMENT}]}" = "lvm" ]; then
 				LV_SOURCE=$(echo "${DISK_SOURCE[${XML_ELEMENT}]}" | cut -d ':' -f 2 | cut -d '.' -f 2)
                         	VG_SOURCE=$(echo "${DISK_SOURCE[${XML_ELEMENT}]}" | cut -d ':' -f 2 | cut -d '.' -f 1)
@@ -505,9 +515,9 @@ sleep 3
 sudo lxc-attach -e -n one-$VM_ID -- hostname $VM_HOSTNAME_FIXED
 EOF
 
-echo "if [ \"\$just_reboot\" = \"0\" ]; then" >> /var/lib/lxc/one-$VM_ID/stop-hook
-echo "sudo rm -rf /var/lib/lxc/one-${VM_ID}" >> /var/lib/lxc/one-$VM_ID/stop-hook
-echo "fi" >> /var/lib/lxc/one-$VM_ID/stop-hook
+echo "if [ \"\$VM_STATE\" = \"STOPPED\" ]; then" >> /var/lib/lxc/one-$VM_ID/clean
+echo "sudo rm -rf /var/lib/lxc/one-${VM_ID}" >> /var/lib/lxc/one-$VM_ID/clean
+echo "fi" >> /var/lib/lxc/one-$VM_ID/clean
 
 ##############################################################################
 #                  	    INICIAR CONTENEDOR VIRTUAL                       #
