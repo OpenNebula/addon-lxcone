@@ -515,6 +515,12 @@ sleep 3
 sudo lxc-attach -e -n one-$VM_ID -- hostname $VM_HOSTNAME_FIXED
 EOF
 
+cat >> /var/lib/lxc/one-$VM_ID/clean << EOF
+while read iFACE; do
+	sudo ip l del \$iFACE
+done < <(ip a | grep "${VM_ID}-" | cut -d\':\' -f 2)
+EOF
+
 echo "if [ \"\$VM_STATE\" = \"STOPPED\" ]; then" >> /var/lib/lxc/one-$VM_ID/clean
 echo "sudo rm -rf /var/lib/lxc/one-${VM_ID}" >> /var/lib/lxc/one-$VM_ID/clean
 echo "fi" >> /var/lib/lxc/one-$VM_ID/clean
