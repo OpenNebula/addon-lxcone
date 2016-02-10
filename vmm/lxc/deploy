@@ -289,7 +289,8 @@ case $VM_DISK_TYPE in
                 	let line_number=line_number-1
                 	sudo sed -i "$line_number r /tmp/rc.local.opennebula_temp" /etc/rc.local
 		fi
-		echo "VM_STATE=\$(sudo lxc-info -n one-$VM_ID | grep State | awk '{ print \$2 }')" > /var/lib/lxc/one-$VM_ID/clean
+		echo "sleep 5" > /var/lib/lxc/one-$VM_ID/clean
+		echo "VM_STATE=\$(sudo lxc-info -n one-$VM_ID | grep State | awk '{ print \$2 }')" >> /var/lib/lxc/one-$VM_ID/clean
                 echo "if [ \"\$VM_STATE\" = \"STOPPED\" ]; then" >> /var/lib/lxc/one-$VM_ID/clean
                 echo "start_line=\$(grep -in \"lxc-start -d -n one-$VM_ID\" /etc/rc.local | cut -d ':' -f 1)" >> /var/lib/lxc/one-$VM_ID/clean
                 echo "end_line=\$((\$start_line+1))" >> /var/lib/lxc/one-$VM_ID/clean
@@ -311,7 +312,8 @@ case $VM_DISK_TYPE in
                		let line_number=line_number-1
                 	sudo sed -i "$line_number r /tmp/rc.local.opennebula_temp" /etc/rc.local
 		fi
-		echo "VM_STATE=\$(sudo lxc-info -n one-$VM_ID | grep State | awk '{ print \$2 }')" > /var/lib/lxc/one-$VM_ID/clean
+		echo "sleep 5" > /var/lib/lxc/one-$VM_ID/clean
+		echo "VM_STATE=\$(sudo lxc-info -n one-$VM_ID | grep State | awk '{ print \$2 }')" >> /var/lib/lxc/one-$VM_ID/clean
                 echo "if [ \"\$VM_STATE\" = \"STOPPED\" ]; then" >> /var/lib/lxc/one-$VM_ID/clean
                 echo "start_line=\$(grep -in \"lxc-start -d -n one-$VM_ID\" /etc/rc.local | cut -d ':' -f 1)" >> /var/lib/lxc/one-$VM_ID/clean
                 echo "end_line=\$((\$start_line+1))" >> /var/lib/lxc/one-$VM_ID/clean
@@ -340,7 +342,8 @@ case $VM_DISK_TYPE in
 			let line_number=line_number-1
                 	sudo sed -i "$line_number r /tmp/rc.local.opennebula_temp" /etc/rc.local
 		fi
-		echo "VM_STATE=\$(sudo lxc-info -n one-$VM_ID | grep State | awk '{ print \$2 }')" > /var/lib/lxc/one-$VM_ID/clean
+		echo "sleep 5" > /var/lib/lxc/one-$VM_ID/clean
+		echo "VM_STATE=\$(sudo lxc-info -n one-$VM_ID | grep State | awk '{ print \$2 }')" >> /var/lib/lxc/one-$VM_ID/clean
                 echo "if [ \"\$VM_STATE\" = \"STOPPED\" ]; then" >> /var/lib/lxc/one-$VM_ID/clean
 		echo "sudo rbd unmap ${rootfs}" >> /var/lib/lxc/one-$VM_ID/clean
 		echo "start_line=\$(grep -in \"rbd map $CEPH_AUTH $VM_DISK_SOURCE\" /etc/rc.local | cut -d ':' -f 1)" >> /var/lib/lxc/one-$VM_ID/clean
