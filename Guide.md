@@ -504,8 +504,8 @@ Yes, you can. There are some other actions that need to be done, but they will b
 
 ### Any issue or question please contact us.
 
-Sergio Vega Gutiérrez (sergiojvg92@gmail.com)
 José Manuel de la Fé Herrero (jmdelafe92@gmail.com)
+Sergio Vega Gutiérrez (sergiojvg92@gmail.com)
 
 
 
