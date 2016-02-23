@@ -28,7 +28,7 @@ VM_ID=$3
 iFACE_DEL=$(sudo lxc-attach -n one-$VM_ID -- ip a | grep -B 1 $MAC | cut -d ':' -f 2 | sed -n '1 p')
 exec_and_log "sudo lxc-attach -n one-$VM_ID ip link delete $iFACE_DEL"
 
-_line=$(grep -in "lxc.network.veth.hwaddr = $MAC" /var/lib/lxc/one-$VM_ID/config | awk 'NR==1' | cut -d ':' -f 1)
+_line=$(grep -in "lxc.network.hwaddr = $MAC" /var/lib/lxc/one-$VM_ID/config | awk 'NR==1' | cut -d ':' -f 1)
 start_line=$((${_line}-7))
 end_line=$((${_line}+2))
 sed "$start_line,$end_line d" /var/lib/lxc/one-$VM_ID/config > /var/lib/lxc/one-$VM_ID/config_tmp && mv /var/lib/lxc/one-$VM_ID/config_tmp /var/lib/lxc/one-$VM_ID/config
