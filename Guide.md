@@ -169,7 +169,7 @@ Restart **OpenNebula** service.
 
 ####Add this line at the end of **/etc/apt/sources.list**:    
 ```
-deb http://downloads.opennebula.org/repo/4.14/Ubuntu/14.04/ stable opennebula
+deb http://downloads.opennebula.org/repo/4.14/Debian/8 stable opennebula
 ```
 
 ####Issue an update
@@ -183,10 +183,6 @@ deb http://downloads.opennebula.org/repo/4.14/Ubuntu/14.04/ stable opennebula
 ```
 # apt-get install opennebula-node nfs-common bridge-utils lxc xmlstarlet x11vnc libpam-runtime bc at
 ```
-
-
-#### Warning
-> We installed the host over Debian 8 (jessie). Packages for Jessie aren't in the Opennebula repositories, but you can manually install them using any package manager (dpkg, GDebi) and watching the dependencies.
 
 Download **VNCterm** binary package from the **GitHub** repository and install it using **dpkg** or other package manager.
 
