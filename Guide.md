@@ -30,12 +30,12 @@ is a cloud computing platform for managing heterogeneous distributed data center
 
 ####Add key for OpenNebula repository:
 ```
-$ wget -q -O- http://downloads.opennebula.org/repo/Ubuntu/repo.key | apt-key add -
+$ wget -q -O- http://downloads.opennebula.org/repo/Debian/repo.key | apt-key add -
 ```
 
 ####Add this line at the end of **/etc/apt/sources.list**:  
 ``` 
-deb http://downloads.opennebula.org/repo/4.14/Ubuntu/14.04/ stable opennebula
+deb http://downloads.opennebula.org/repo/4.14/Debian/8 stable opennebula
 ```
 
 
@@ -164,7 +164,7 @@ Restart **OpenNebula** service.
 
 ####Add key for OpenNebula repository:
 ```
-# wget -q -O- http://downloads.opennebula.org/repo/Ubuntu/repo.key | apt-key add -
+# wget -q -O- http://downloads.opennebula.org/repo/Debian/repo.key | apt-key add -
 ```
 
 ####Add this line at the end of **/etc/apt/sources.list**:    
