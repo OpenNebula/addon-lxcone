@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # -------------------------------------------------------------------------- #
-# Copyright 2002-2015, OpenNebula Project (OpenNebula.org), C12G Labs        #
+# Copyright 2002-2016, OpenNebula Project (OpenNebula.org), C12G Labs        #
 # 									     #
 # Authors: Sergio Vega Gutiérrez          sergiojvg92@gmail.com		     #
 #	   José Manuel de la Fé Herrero   jmdelafe92@gmail.com               #

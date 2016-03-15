@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 
 # -------------------------------------------------------------------------- #
-# Copyright 2014-2015, OpenNebula Project (OpenNebula.org), C12G Labs        #
+# Copyright 2014-2016, OpenNebula Project (OpenNebula.org), C12G Labs        #
 #                                                                            #
 # Authors: José Manuel de la Fé Herrero   jmdelafe92@gmail.com               #
 #          Sergio Vega Gutiérrez          sergiojvg92@gmail.com              #
