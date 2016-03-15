@@ -54,7 +54,7 @@ José Manuel de la Fé Herrero - jmdelafe92@gmail.com
 
 Sergio Vega Gutiérrez - sergiojvg92@gmail.com
 
-Copyright 2002-2015, OpenNebula Project, OpenNebula Systems (formerly C12G Labs)
+Copyright 2014-2016, OpenNebula Project, OpenNebula Systems (formerly C12G Labs)
 
 Licensed under the Apache license, version 2.0 (the "license"); 
 You may not use this file except in compliance with the license. 
