@@ -367,6 +367,9 @@ EOF
 cat > /var/lib/lxc/one-$VM_ID/stop-hook <<EOF
 #!/bin/bash
 #sed -i s/"lxc.start.auto = 1"/"lxc.start.auto = 0"/g /var/lib/lxc/one-$VM_ID/config
+while read iFACE; do
+	sudo ip l del \$iFACE
+done < <(ip a | grep "${VM_ID}-" | cut -d ':' -f 2)
 at now -f /var/lib/lxc/one-$VM_ID/clean
 EOF
 
@@ -521,12 +524,6 @@ EOF
 echo "if [ \"\$VM_STATE\" = \"STOPPED\" ]; then" >> /var/lib/lxc/one-$VM_ID/clean
 echo "sudo rm -rf /var/lib/lxc/one-${VM_ID}" >> /var/lib/lxc/one-$VM_ID/clean
 echo "fi" >> /var/lib/lxc/one-$VM_ID/clean
-
-cat >> /var/lib/lxc/one-$VM_ID/clean << EOF
-while read iFACE; do
-	sudo ip l del \$iFACE
-done < <(ip a | grep "${VM_ID}-" | cut -d ':' -f 2)
-EOF
 
 ##############################################################################
 #                  	    INICIAR CONTENEDOR VIRTUAL                       #
