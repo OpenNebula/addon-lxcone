@@ -198,7 +198,7 @@ deb http://downloads.opennebula.org/repo/4.14/Ubuntu/14.04/ stable opennebula
 #### Warning
 > We installed the host over Debian 8 (jessie). Packages for Jessie aren't in the Opennebula repositories, but you can manually install them using any package manager (dpkg, GDebi) and watching the dependencies.
 
-Download **SVNCterm** binary package from the **GitHub** repository and install it using **dpkg** or other package manager.
+You can get **SVNCterm** from [the svncterm repository in github](https://github.com/dealfonso/svncterm) and compile it following its straightforward instructions. Alternatively, for the case of debian based distributions, you can download **SVNCterm** binary package from the **GitHub** repository and install it using **dpkg** or other package manager.
 
 ### 2.3. Network configuration
 
