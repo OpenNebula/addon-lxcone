@@ -73,11 +73,9 @@ sudo lxc-attach -n one-$VM_ID -- mkdir -p /media/$TARGET_INDEX
 case $TYPE in
         FILE) SOURCE=`fix_dir_slashes $SOURCE`
 		exists=$(losetup -a | grep $SOURCE | cut -d ':' -f 1)
-		if [ -z \$exists ]; then
-		losetup $LOOP $SOURCE
+		if [ -z $exists ]; then
+			LOOP=$(sudo losetup -f --show $SOURCE);
 		fi
-		LOOP=$(sudo losetup -f --show $SOURCE);
-		ONLY_LOOP=$(echo $LOOP | cut -d '/' -f 3)
 		sudo lxc-device -n one-$VM_ID add $LOOP;
 	        exec_and_log "sudo lxc-attach -n one-$VM_ID -- mount $LOOP /media/$TARGET_INDEX";
 		echo "#--------------------Mounting disk $TARGET_INDEX on one-${VM_ID}--------------------#" > /var/lib/lxc/one-$VM_ID/vnc_tmp
