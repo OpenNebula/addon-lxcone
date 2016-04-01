@@ -1,3 +1,5 @@
+## News
+
 ###(2016-04-01)
 
 We are glad to announce that LXCoNe will follow the rolling release development model :)
