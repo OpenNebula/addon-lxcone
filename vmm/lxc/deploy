@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # -------------------------------------------------------------------------- #
-# Copyright 2014-2016, OpenNebula Project, OpenNebula Systems                #
+# Copyright 2014-2015, OpenNebula Project, OpenNebula Systems                #
 #                                                                            #
 # Authors: Sergio Vega Gutiérrez          sergiojvg92@gmail.com              #
 #          José Manuel de la Fé Herrero   jmdelafe92@gmail.com               #
@@ -283,7 +283,8 @@ case $VM_DISK_TYPE in
 	FILE) 	rootfs=loop:/var/lib/one/datastores/$SYSTEM_DATASTORE_ID/$VM_ID/disk.0
 		RC_LOCAL=$(sudo grep "lxc-start -d -n one-$VM_ID" /etc/rc.local)
 		if [ -z "$RC_LOCAL" ]; then
-			sudo echo "lxc-start -d -n one-$VM_ID" > /tmp/rc.local.opennebula_temp
+			sudo echo "lxc-start -d -n one-$VM_ID" > /var/lib/lxc/one-$VM_ID/init
+			sudo echo "at now -f /var/lib/lxc/one-$VM_ID/init" > /tmp/rc.local.opennebula_temp
 			sudo echo "#--------------------------------------------" >> /tmp/rc.local.opennebula_temp
 			line_number=$(grep -in "exit 0" /etc/rc.local | tail -1 | cut -d ':' -f 1)
                 	let line_number=line_number-1
@@ -292,7 +293,7 @@ case $VM_DISK_TYPE in
 		echo "sleep 5" > /var/lib/lxc/one-$VM_ID/clean
 		echo "VM_STATE=\$(sudo lxc-info -n one-$VM_ID | grep State | awk '{ print \$2 }')" >> /var/lib/lxc/one-$VM_ID/clean
                 echo "if [ \"\$VM_STATE\" = \"STOPPED\" ]; then" >> /var/lib/lxc/one-$VM_ID/clean
-                echo "start_line=\$(grep -in \"lxc-start -d -n one-$VM_ID\" /etc/rc.local | cut -d ':' -f 1)" >> /var/lib/lxc/one-$VM_ID/clean
+                echo "start_line=\$(grep -in \"at now -f /var/lib/lxc/one-$VM_ID/init\" /etc/rc.local | cut -d ':' -f 1)" >> /var/lib/lxc/one-$VM_ID/clean
                 echo "end_line=\$((\$start_line+1))" >> /var/lib/lxc/one-$VM_ID/clean
 		echo "sed \"\$start_line,\$end_line d\" /etc/rc.local > /tmp/rc.local.tmp1 && mv /tmp/rc.local.tmp1 /etc/rc.local" >> /var/lib/lxc/one-$VM_ID/clean
                 echo "chmod 755 /etc/rc.local" >> /var/lib/lxc/one-$VM_ID/clean
@@ -306,7 +307,8 @@ case $VM_DISK_TYPE in
                 fi
 		RC_LOCAL=$(sudo grep "lxc-start -d -n one-$VM_ID" /etc/rc.local)
                 if [ -z "$RC_LOCAL" ]; then
-                	sudo echo "lxc-start -d -n one-$VM_ID" > /tmp/rc.local.opennebula_temp
+                	sudo echo "lxc-start -d -n one-$VM_ID" > /var/lib/lxc/one-$VM_ID/init
+                	sudo echo "at now -f /var/lib/lxc/one-$VM_ID/init" > /tmp/rc.local.opennebula_temp
 	                sudo echo "#--------------------------------------------" >> /tmp/rc.local.opennebula_temp
         	        line_number=$(grep -in "exit 0" /etc/rc.local | tail -1 | cut -d ':' -f 1)
                		let line_number=line_number-1
@@ -315,7 +317,7 @@ case $VM_DISK_TYPE in
 		echo "sleep 5" > /var/lib/lxc/one-$VM_ID/clean
 		echo "VM_STATE=\$(sudo lxc-info -n one-$VM_ID | grep State | awk '{ print \$2 }')" >> /var/lib/lxc/one-$VM_ID/clean
                 echo "if [ \"\$VM_STATE\" = \"STOPPED\" ]; then" >> /var/lib/lxc/one-$VM_ID/clean
-                echo "start_line=\$(grep -in \"lxc-start -d -n one-$VM_ID\" /etc/rc.local | cut -d ':' -f 1)" >> /var/lib/lxc/one-$VM_ID/clean
+                echo "start_line=\$(grep -in \"at now -f /var/lib/lxc/one-$VM_ID/init\" /etc/rc.local | cut -d ':' -f 1)" >> /var/lib/lxc/one-$VM_ID/clean
                 echo "end_line=\$((\$start_line+1))" >> /var/lib/lxc/one-$VM_ID/clean
                 echo "sed \"\$start_line,\$end_line d\" /etc/rc.local > /tmp/rc.local.tmp1 && mv /tmp/rc.local.tmp1 /etc/rc.local" >> /var/lib/lxc/one-$VM_ID/clean
                 echo "chmod 755 /etc/rc.local" >> /var/lib/lxc/one-$VM_ID/clean
@@ -336,7 +338,8 @@ case $VM_DISK_TYPE in
 			echo "line=\$(grep -in rootfs /var/lib/lxc/one-$VM_ID/config | cut -d ':' -f 1)" >> /tmp/rc.local.opennebula_temp
 			echo "sed \"\$line d\" /var/lib/lxc/one-$VM_ID/config > /tmp/one-$VM_ID-config-tmp && mv /tmp/one-$VM_ID-config-tmp /var/lib/lxc/one-$VM_ID/config" >> /tmp/rc.local.opennebula_temp
 			echo "sed -i \"\$line i \$rootfs\" /var/lib/lxc/one-$VM_ID/config" >> /tmp/rc.local.opennebula_temp
-			echo "lxc-start -d -n one-$VM_ID" >> /tmp/rc.local.opennebula_temp
+			echo "at now -f /var/lib/lxc/one-$VM_ID/init" >> /tmp/rc.local.opennebula_temp
+			echo "lxc-start -d -n one-$VM_ID" > /var/lib/lxc/one-$VM_ID/init
 			sudo echo "#--------------------------------------------" >> /tmp/rc.local.opennebula_temp
                 	line_number=$(grep -in "exit 0" /etc/rc.local | tail -1 | cut -d ':' -f 1)
 			let line_number=line_number-1
