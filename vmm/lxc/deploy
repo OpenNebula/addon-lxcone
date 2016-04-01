@@ -401,7 +401,7 @@ sudo chmod 755 /var/lib/lxc/one-$VM_ID/clean
 #                      GENERATING CONFIG FILE	                             #
 ##############################################################################
 cat > /var/lib/lxc/one-$VM_ID/config <<EOF
-# Template used to create this container: /usr/share/lxc/templates/lxc-debian
+
 # Parameters passed to the template:
 # For additional config options, please look at lxc.container.conf(5)
 lxc.rootfs = $rootfs
@@ -515,9 +515,8 @@ done < <(xmlstarlet sel -t -v "/VM/TEMPLATE/DISK/DISK_ID" -n /var/lib/one/vms/${
 
 cat >> /var/lib/lxc/one-$VM_ID/vnc <<EOF
 ## VNC
-if [ -n "\${VM_VNC_PASSWD}" ]; then
-sudo vncterm -timeout 0 -passwd ${VM_VNC_PASSWD} -rfbport $VM_VNC_PORT -c lxc-console -n one-$VM_ID &
-fi
+
+sudo svncterm -timeout 0 -passwd "\${VM_VNC_PASSWD}" -rfbport $VM_VNC_PORT -c lxc-console -n one-$VM_ID -t 0 &
 
 ## Setting the VM Hostname after making sure there are no space chars on the hostname
 sleep 3

@@ -32,7 +32,25 @@
 	* Fixed issues with reboot and hard reboot.
 	* Fixed bridge selection in NIC hot-attaching.
 
+
 ###V1.0 (2015-12-17)
+
 * Failure probe. In case any node is forcibly power off, or in case of an electrical failure, all containers that where running inside affected nodes
 * NIC name matches with OpenNebula NIC ID when deploying.
-* Support for Ceph. 
+* Support for Ceph.
+
+
+(2016-04-1)
+
+* Several issues fixed:
+    * with Ubuntu as a node
+    * with vnc server and connection 
+    * with with attach disk   
+    * when when cleaning the node 
+    * with nic hot-attach
+    * with poweroff and reboot compute node
+* SNVCterm replaced VNCterm. Featuring:
+    * It remove TLS requirements
+    * Enables the usage of non-patched versions of libvncserver and others
+    * Enables the usage of passwordless VNC console (it is the common usage in ONE)
+    * Corrects problems in password checking

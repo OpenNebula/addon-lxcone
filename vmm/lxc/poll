@@ -31,6 +31,10 @@ sudo lxc-ls --fancy | grep one- | while read VM; do
 		RUNNING)	STATE=a ;
 				POLL="STATE=$STATE"
 
+				#vnc-babysitter
+				puerto=$(echo -e $(xmlstarlet sel -t -v "/VM/TEMPLATE/GRAPHICS/PORT" /var/lib/one/vms/$VM_ID/deployment.0))
+        		ppuerto=$(netstat -tpl | grep $puerto  | cut -d ':' -f 2 | cut -d ' ' -f1)
+
 				# Gathering info...
 
 				# RAM

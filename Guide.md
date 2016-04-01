@@ -8,8 +8,7 @@ Throughout the installation there are two separate roles: `frontend` and `nodes`
 
 
 #### Note
-> We built and tested this drivers with the frontend installed on Ubuntu 14.04 (Trusty Tahr) and the nodes on Debian 8 (Jessie)
-
+> We built and tested these drivers with both the frontend and the nodes installed on Ubuntu 14.04 (Trusty Tahr) and Debian 8 (Jessie), the 4 combinations work OK. 
 
 [LXC](https://linuxcontainers.org/lxc/)
 is a userspace interface for the Linux kernel containment features. Through a powerful API and simple tools, it lets Linux users easily create and manage system or application containers.
@@ -25,17 +24,21 @@ is a cloud computing platform for managing heterogeneous distributed data center
 #### Warning
 > Commands prefixed by # are meant to be run as root. Commands prefixed by $ must be run as oneadmin.
 
+#### Note:
+```
+The installation is the same for Debian and Ubuntu
+```
 
 ### 1.1. Configure **Opennebula** repository
 
 ####Add key for OpenNebula repository:
 ```
-$ wget -q -O- http://downloads.opennebula.org/repo/Debian/repo.key | apt-key add -
+$ wget -q -O- http://downloads.opennebula.org/repo/Ubuntu/repo.key | apt-key add -
 ```
 
 ####Add this line at the end of **/etc/apt/sources.list**:  
 ``` 
-deb http://downloads.opennebula.org/repo/4.14/Debian/8 stable opennebula
+deb http://downloads.opennebula.org/repo/4.14/Ubuntu/14.04/ stable opennebula
 ```
 
 
@@ -159,18 +162,24 @@ Restart **OpenNebula** service.
 
 ## 2 - Installation in the Nodes
 
- 
+
+#### Note:
+```
+We developed first these drivers for debian, there will be some warnings to do some specific steps for ubuntu.
+
+```
 ### 2.1. Configure **Opennebula** repositories
 
 ####Add key for OpenNebula repository:
 ```
-# wget -q -O- http://downloads.opennebula.org/repo/Debian/repo.key | apt-key add -
+# wget -q -O- http://downloads.opennebula.org/repo/Ubuntu/repo.key | apt-key add -
 ```
 
 ####Add this line at the end of **/etc/apt/sources.list**:    
 ```
-deb http://downloads.opennebula.org/repo/4.14/Debian/8 stable opennebula
+deb http://downloads.opennebula.org/repo/4.14/Ubuntu/14.04/ stable opennebula
 ```
+
 
 ####Issue an update
 ```
@@ -181,10 +190,15 @@ deb http://downloads.opennebula.org/repo/4.14/Debian/8 stable opennebula
 ### 2.2. Install required packages
 
 ```
-# apt-get install opennebula-node nfs-common bridge-utils lxc xmlstarlet x11vnc libpam-runtime bc at
+# apt-get install opennebula-node nfs-common bridge-utils lxc xmlstarlet libpam-runtime bc at libvncserver0 libjpeg62
 ```
+#### Warning for Ubuntu
+> We recommend to install lxc version 1.1.5 available on **Trusty backports** because otherwise you won't be able to run debian containers in an ubuntu node.
 
-Download **VNCterm** binary package from the **GitHub** repository and install it using **dpkg** or other package manager.
+#### Warning
+> We installed the host over Debian 8 (jessie). Packages for Jessie aren't in the Opennebula repositories, but you can manually install them using any package manager (dpkg, GDebi) and watching the dependencies.
+
+Download **SVNCterm** binary package from the **GitHub** repository and install it using **dpkg** or other package manager.
 
 ### 2.3. Network configuration
 
@@ -245,7 +259,7 @@ Mount the directory
 Now, the `frontend` should be able to SSH inside the host without password using the **oneadmin** user. 
 
 #### Warning
-> Node will automatically try to mount /var/lib/one every time it starts. This is recommended, specially if you are using shared storage, but an error will occur if the frontend is down when the node boots up. If this happen, manually mount /var/lib/one and everything should be fine.
+> Node will automatically try to mount /var/lib/one every time it starts. This is recommended, specially if you are using shared storage, but an error will occur if the frontend is down when the node boots up. If this happen, manually mount /var/lib/one and everything should be fine or setup as **noauto** intead of **auto** at the end of **/etc/fstab** line added previously.
 
 
 ### 2.5. Add **oneadmin** to the **sudoers** file, and enable it to run **root** commands without password.
@@ -253,6 +267,12 @@ Now, the `frontend` should be able to SSH inside the host without password using
 Add the following line to **/etc/sudoers**
 ```
 oneadmin ALL= NOPASSWD: ALL
+```
+
+Type this command to allow oneadmin to execute scripts in the container directory
+
+```
+# chmod +rx /var/lib/lxc
 ```
 
 
@@ -346,7 +366,7 @@ Reboot or load rbd module with **modprobe rbd**.
 ```
 
 #### Warning
-> If this command fails, try running it again.
+> If this command fails, try running it again. If you run this command in ubuntu when you specify **-B loop** the terminal will show an error, this doesn't allow to create **loop images** using **lxc** on **Ubuntu**. This issue is independant from the drivers, to create ubuntu containers we used **debian's lxc**, anyway you'll be able to start debian containers in ubuntu(if you installed lxc 1.1.5 as stated above).
 
 We just created a 3Gb raw image with a linux container inside. The raw image file will be located at **/var/lib/lxc/name/rootdev**. 
 **name** will be the name of the container.
@@ -360,6 +380,13 @@ We just created a 3Gb raw image with a linux container inside. The raw image fil
 First, be sure to copy the **root** password at the end of **lxc-create**
 ```
 # lxc-start -n name
+```
+
+#### Warning for Ubuntu
+> In ubuntu whe you start a container using the above command you won't be logged in the container automatically, to enter it you'll have to use
+
+```
+# lxc-console -n name -t 0
 ```
 
 ####  3.2.2. Change the default root password
@@ -467,9 +494,8 @@ You can add one using sunstone under **Virtual Resources** --> **Templates** -->
     * It is posible to add several more LVM and File System diks. This disks will be mounted inside the container under **/media/DISK_ID**
 * Under **Network**
     * Select none, one or many network interfaces. They will appear inside the container configured.
-* Under **Input/Output** (In case VNC is required0
+* Under **Input/Output** (In case VNC is required)
     * Select VNC under graphics.
-    * The only required field is **Password**. A password must be specified or **Generate Random Password** must be checked.
 
 After this, just click on the **Create** button.
 
@@ -497,11 +523,13 @@ It will use both. In case the configuration from OpenNebula matches the one insi
 #### Can I also shutdown LXC container's from LXC's CLI or from inside the container?
 Yes, you can. There are some other actions that need to be done, but they will be executed regardless you issued the shutdown from OpenNebula or fron LXC. It might take up to 30 seconds to OpenNebula to change te container's status in case you power off the container from LXC.
 
+#### VNC connection is lost sometimes
+Sometimes the noVNC client used by opennebula, somehow breaks the VNC server created in the node, this condition is periodically checked and when it happens the sever gets started again. Refresh your tab in the web browser after a few seconds.
 
 ### Any issue or question please contact us.
 
-José Manuel de la Fé Herrero (jmdelafe92@gmail.com)
 Sergio Vega Gutiérrez (sergiojvg92@gmail.com)
+José Manuel de la Fé Herrero (jmdelafe92@gmail.com)
 
 
 
