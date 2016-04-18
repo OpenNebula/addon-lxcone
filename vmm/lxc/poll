@@ -35,6 +35,11 @@ sudo lxc-ls --fancy | grep one- | while read VM; do
 				puerto=$(echo -e $(xmlstarlet sel -t -v "/VM/TEMPLATE/GRAPHICS/PORT" /var/lib/one/vms/$VM_ID/deployment.0))
         		ppuerto=$(netstat -tpl | grep $puerto  | cut -d ':' -f 2 | cut -d ' ' -f1)
 
+                if [ -z $ppuerto ]; then
+				pass=$(echo -e $(xmlstarlet sel -t -v "/VM/TEMPLATE/GRAPHICS/PASSWD" /var/lib/one/vms/$VM_ID/deployment.0))
+                sudo svncterm -timeout 0 -passwd "${pass}" -rfbport "$puerto" -c lxc-console -n one-$VM_ID -t 0 &
+                fi
+                
 				# Gathering info...
 
 				# RAM
