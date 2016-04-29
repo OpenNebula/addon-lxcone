@@ -42,7 +42,7 @@
 * Support for Ceph.
 
 
-(2016-04-1)
+###V1.1 (2016-04-1)
 
 * Several issues fixed:
     * with Ubuntu as a node
@@ -56,3 +56,20 @@
     * Enables the usage of non-patched versions of libvncserver and others
     * Enables the usage of passwordless VNC console (it is the common usage in ONE)
     * Corrects problems in password checking
+
+###V1.1.3 (2016-04-29)
+
+* Issue when VNC connecting after VNC rebooting fixed
+* LXC native logs now availabe in Sunstone Log
+* Minor bugs fixed
+
+
+
+
+
+###TODO
+
+* Live Migration
+* Snapshots
+* Smooth enhanced logging
+* Using LXC2 in Xenial Xerus

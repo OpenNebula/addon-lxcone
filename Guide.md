@@ -24,23 +24,31 @@ is a cloud computing platform for managing heterogeneous distributed data center
 #### Warning
 > Commands prefixed by # are meant to be run as root. Commands prefixed by $ must be run as oneadmin.
 
-#### Note:
-```
-The installation is the same for Debian and Ubuntu
-```
-
 ### 1.1. Configure **Opennebula** repository
 
-####Add key for OpenNebula repository:
+## For Ubuntu
+
+####Add key for repository:
 ```
-$ wget -q -O- http://downloads.opennebula.org/repo/Ubuntu/repo.key | apt-key add -
+$ wget -q -O- http://downloads.opennebula.org/repo/ubuntu/repo.key | apt-key add -
 ```
 
 ####Add this line at the end of **/etc/apt/sources.list**:  
 ``` 
-deb http://downloads.opennebula.org/repo/4.14/Ubuntu/14.04/ stable opennebula
+deb http://downloads.opennebula.org/repo/4.14/ubuntu/14.04/ stable opennebula
 ```
 
+##For Debian
+
+####Add key for repository:
+```
+$ wget -q -O- http://downloads.opennebula.org/repo/debian/repo.key | apt-key add -
+```
+
+####Add this line at the end of **/etc/apt/sources.list**:  
+``` 
+deb http://downloads.opennebula.org/repo/4.14/debian/8/ stable opennebula
+```
 
 ####Issue an update:
 ```
@@ -72,9 +80,11 @@ Now restart Sunstone:
 #### Warning
 > Skip this section if you are using a single server for both the frontend and worker node roles.
 
-Export **/var/lib/one/** from the frontend to the worker nodes. To do so add the following at the end of **/etc/exports** in the `frontend`:   
+Export **/var/lib/one/** and **/var/log/one** from the frontend to the worker nodes. To do so add the following at the end of **/etc/exports** in the `frontend`:   
+
 /var/lib/one/ *(rw,sync,no_subtree_check,no_root_squash,crossmnt,nohide)
 
+/var/log/one/ *(rw,sync,no_subtree_check,no_root_squash,crossmnt,nohide)
 
 ####Refresh NFS exports:
 ```
@@ -162,24 +172,30 @@ Restart **OpenNebula** service.
 
 ## 2 - Installation in the Nodes
 
-
-#### Note:
-```
-We developed first these drivers for debian, there will be some warnings to do some specific steps for ubuntu.
-
-```
 ### 2.1. Configure **Opennebula** repositories
+
+##For Ubuntu
 
 ####Add key for OpenNebula repository:
 ```
-# wget -q -O- http://downloads.opennebula.org/repo/Ubuntu/repo.key | apt-key add -
+# wget -q -O- http://downloads.opennebula.org/repo/ubuntu/repo.key | apt-key add -
 ```
 
 ####Add this line at the end of **/etc/apt/sources.list**:    
 ```
-deb http://downloads.opennebula.org/repo/4.14/Ubuntu/14.04/ stable opennebula
+deb http://downloads.opennebula.org/repo/4.14/ubuntu/14.04/ stable opennebula
+```
+##For Debian
+
+####Add key for repository:
+```
+$ wget -q -O- http://downloads.opennebula.org/repo/debian/repo.key | apt-key add -
 ```
 
+####Add this line at the end of **/etc/apt/sources.list**:  
+``` 
+deb http://downloads.opennebula.org/repo/4.14/debian/8/ stable opennebula
+```
 
 ####Issue an update
 ```
@@ -190,24 +206,22 @@ deb http://downloads.opennebula.org/repo/4.14/Ubuntu/14.04/ stable opennebula
 ### 2.2. Install required packages
 
 ```
-# apt-get install opennebula-node nfs-common bridge-utils lxc xmlstarlet libpam-runtime bc at libvncserver0 libjpeg62
+# apt-get install opennebula-node nfs-common bridge-utils xmlstarlet libpam-runtime bc at libvncserver0 libjpeg62 lxc
 ```
-#### Warning for Ubuntu
-> We recommend to install lxc version 1.1.5 available on **Trusty backports** because otherwise you won't be able to run debian containers in an ubuntu node.
 
-#### Warning
-> We installed the host over Debian 8 (jessie). Packages for Jessie aren't in the Opennebula repositories, but you can manually install them using any package manager (dpkg, GDebi) and watching the dependencies.
+You can get **SVNCterm** from [the svncterm repository in github](https://github.com/dealfonso/svncterm) and compile it following its straightforward instructions. Alternatively, for the case of Debian based distributions, you can download **SVNCterm** [binary package](https://github.com/OpenNebula/addon-lxcone/blob/master/svncterm_1.2-1_amd64.deb) from the **GitHub** repository and install it using **dpkg** or other package manager.
+```
+# dpkg -i foo/addon-lxcone-master/svncterm_1.2-1_amd64.deb
 
-You can get **SVNCterm** from [the svncterm repository in github](https://github.com/dealfonso/svncterm) and compile it following its straightforward instructions. Alternatively, for the case of debian based distributions, you can download **SVNCterm** [binary package](https://github.com/OpenNebula/addon-lxcone/blob/master/svncterm_1.2-1_amd64.deb) from the **GitHub** repository and install it using **dpkg** or other package manager.
 
 ### 2.3. Network configuration
-
+```
 Turn down your network interface
 ```
 # ifdown eth0
 ```
 
-Configure the new bridge in **/etc/network/interfaces**. This is my configuration
+Configure the new bridge in **/etc/network/interfaces**. This is our configuration
 
 This is our config:
 ```
@@ -239,14 +253,19 @@ Turn up the new bridge
 ```
 
 #### Note
-> **eth0** was my primary network adapter, if the name is different in your case, remember to change it in **bridge_ports** option
+> **eth0** was our primary network adapter, if the name is different in your case, remember to change it in **bridge_ports** option. In Ubuntu when you install lxc it creates a new brige with the name **lxcbr0** we don't use it you can use this one, but it's not configured in **/etc/network/interfaces**. Replace **10.8.91.88** for your node IP.
 
 
-### 2.4. Configure **fstab** to mount **/var/lib/one** from the `frontend`
+### 2.4. Configure **fstab** to mount **/var/lib/one** and **/var/log/one** from the `frontend`
+
+```
+# mkdir -p /var/log/one
+```
 
 Add this line to **/etc/fstab**:
 ```
 192.168.1.1:/var/lib/one/ /var/lib/one/ nfs soft,intr,rsize=8192,wsize=8192,auto
+192.168.1.1:/var/log/one/ /var/log/one/ nfs soft,intr,rsize=8192,wsize=8192,auto
 ```
 
 Replace **192.168.1.1** with the frontend's ip address.
@@ -254,12 +273,13 @@ Replace **192.168.1.1** with the frontend's ip address.
 Mount the directory
 ```
 # mount /var/lib/one
+# mount /var/log/one
 ```
 
 Now, the `frontend` should be able to SSH inside the host without password using the **oneadmin** user. 
 
 #### Warning
-> Node will automatically try to mount /var/lib/one every time it starts. This is recommended, specially if you are using shared storage, but an error will occur if the frontend is down when the node boots up. If this happen, manually mount /var/lib/one and everything should be fine or setup as **noauto** intead of **auto** at the end of **/etc/fstab** line added previously.
+> Node will automatically try to mount /var/lib/one every time it starts. This is recommended, specially if you are using shared storage, but an error will occur if the frontend is down when the node boots up. If this happen, manually mount /var/lib/one and everything should be fine or write as **noauto** instead of **auto** at the end of **/etc/fstab** line added previously.
 
 
 ### 2.5. Add **oneadmin** to the **sudoers** file, and enable it to run **root** commands without password.
@@ -365,9 +385,6 @@ Reboot or load rbd module with **modprobe rbd**.
 # lxc-create -t debian -B loop --fssize=3G -n name
 ```
 
-#### Warning
-> If this command fails, try running it again. If you run this command in ubuntu when you specify **-B loop** the terminal will show an error, this doesn't allow to create **loop images** using **lxc** on **Ubuntu**. This issue is independant from the drivers, to create ubuntu containers we used **debian's lxc**, anyway you'll be able to start debian containers in ubuntu(if you installed lxc 1.1.5 as stated above).
-
 We just created a 3Gb raw image with a linux container inside. The raw image file will be located at **/var/lib/lxc/name/rootdev**. 
 **name** will be the name of the container.
 
@@ -377,26 +394,26 @@ We just created a 3Gb raw image with a linux container inside. The raw image fil
 
 ####  3.2.1. Start the container
 
-First, be sure to copy the **root** password at the end of **lxc-create**
+First, be sure to copy the **root** password at the end of **lxc-create** and write **lxc.autodev = 1** at the end of **/var/lib/lxc/name/config**
 ```
-# lxc-start -n name
-```
-
-#### Warning for Ubuntu
-> In ubuntu whe you start a container using the above command you won't be logged in the container automatically, to enter it you'll have to use
-
-```
-# lxc-console -n name -t 0
+# lxc-start -n name -d
 ```
 
-####  3.2.2. Change the default root password
+####  3.2.2. Log in the container
+```
+# lxc-console -n name
+```
+#### Note
+>When logging  into an ubuntu container from a debian host, it's possible to get stuck for a while in the tty indication screen, it'll work in no more than 2 minutes and you'll be able to log normally. Logging backwards isn't supported in trusty because it doesn't use systemd and jessie does.
+
+####  3.2.3. Change the default root password
 
 Inside the container type:
 ```
 # passwd
 ```
 
-####  3.2.3. Install the software you want
+####  3.2.4. Install the software you want
 
 **openssh-server**, for example
 
