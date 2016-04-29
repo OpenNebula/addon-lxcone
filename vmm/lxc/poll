@@ -37,7 +37,7 @@ sudo lxc-ls --fancy | grep one- | while read VM; do
 
                 if [ -z $ppuerto ]; then
 				pass=$(echo -e $(xmlstarlet sel -t -v "/VM/TEMPLATE/GRAPHICS/PASSWD" /var/lib/one/vms/$VM_ID/deployment.0))
-                sudo svncterm -timeout 0 -passwd "${pass}" -rfbport "$puerto" -c lxc-console -n one-$VM_ID -t 0 &
+                sudo svncterm -timeout 0 -passwd "${pass}" -rfbport "$puerto" -c lxc-console -n one-$VM_ID &
                 fi
                 
 				# Gathering info...
