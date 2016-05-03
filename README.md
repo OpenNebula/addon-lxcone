@@ -5,6 +5,9 @@
 This addon gives Opennebula the posibility to manage LXC 
 containers. It includes virtualization and monitoring drivers.
 
+This is the readme for the current development version. If you're looking for one of the stable releases, check the [releases] (https://github.com/OpenNebula/addon-lxcone/releases) at the top of this page.
+
+
 ## Features
 
 This addon has the following capabilities:
