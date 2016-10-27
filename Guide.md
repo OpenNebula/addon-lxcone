@@ -59,7 +59,7 @@ deb http://downloads.opennebula.org/repo/4.14/debian/8/ stable opennebula
 ### 1.2. Install the required packages
 
 ```
-# apt-get install opennebula opennebula-sunstone nfs-kernel-server
+# apt-get install opennebula opennebula-sunstone nfs-kernel-server lxc debootstrap
 ```
 
 
