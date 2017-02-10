@@ -1,5 +1,8 @@
 # Addon LXCoNe
 
+# Attention! LXDoNe Released!
+This addon won't be supported anymore. We are moving forward to a fresh new add-on to manage LXD containers from Opennebula.  You can check it [here] (https://github.com/OpenNebula/addon-lxdone) :)
+
 ## Description
 
 This addon gives Opennebula the posibility to manage LXC 
